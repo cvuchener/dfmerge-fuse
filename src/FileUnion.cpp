@@ -113,7 +113,6 @@ void FileUnion::createPath (const std::string &filename, mode_t mode) const {
 	std::string::size_type sep;
 	while (std::string::npos != (sep = filename.find ('/', pos))) {
 		path.push_back (filename.substr (pos, sep-pos));
-		std::cerr << "dir: " << filename.substr (pos, sep-pos) << std::endl;
 		pos = sep+1;
 	}
 	std::string current = _write_branch;
