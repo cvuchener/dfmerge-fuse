@@ -32,7 +32,7 @@ void TokenParser::parse (std::istream &stream) {
 		if (std::regex_search (line, results, TOKEN_REGEX)) {
 			std::string token = results.str (1);
 			std::vector<std::string> values;
-			unsigned int current = 0, pos;
+			std::string::size_type current = 0, pos;
 			while (std::string::npos != (pos = token.find (':', current))) {
 				values.push_back (token.substr (current, pos-current));
 				current = pos+1;

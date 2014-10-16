@@ -109,8 +109,8 @@ void FileUnion::copy (const std::string &newfilename) const {
 
 void FileUnion::createPath (const std::string &filename, mode_t mode) const {
 	std::vector<std::string> path;
-	unsigned int pos = 1; // Ignore the '/' at the start of the path
-	unsigned int sep;
+	std::string::size_type pos = 1; // Ignore the '/' at the start of the path
+	std::string::size_type sep;
 	while (std::string::npos != (sep = filename.find ('/', pos))) {
 		path.push_back (filename.substr (pos, sep-pos));
 		std::cerr << "dir: " << filename.substr (pos, sep-pos) << std::endl;
