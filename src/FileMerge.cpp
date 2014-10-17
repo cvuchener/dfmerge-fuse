@@ -22,6 +22,8 @@
 
 #include <fstream>
 
+#include "FileFactory.h"
+
 extern "C" {
 #include <unistd.h>
 #include <sys/stat.h>
@@ -56,6 +58,55 @@ int FileMerge<DataModel>::getattr (struct stat *stbuf) const {
 	stbuf->st_gid = ::getgid ();
 	stbuf->st_size = _internal_file.str ().size ();
 	stbuf->st_nlink = 1;
+	return 0;
+}
+template <class DataModel>
+int FileMerge<DataModel>::rename (const char *new_name) {
+	int ret;
+	File *new_file = FileFactory::file_factory.newFile (new_name);
+	struct fuse_file_info fi = { .flags = O_WRONLY | O_TRUNC };
+	struct stat stbuf;
+	if ((ret = new_file->getattr (&stbuf)) == -ENOENT) {
+		if ((ret = new_file->create (0600)) < 0) {
+			delete new_file;
+			return ret;
+		}
+	}
+	else if (ret < 0) {
+		delete new_file;
+		return ret;
+	}
+	else {
+		if (((ret = new_file->truncate (0)) < 0) ||
+			((ret = new_file->open (&fi)) < 0)) {
+			delete new_file;
+			return ret;
+		}
+	}
+
+	_internal_file.clear ();
+	_internal_file.seekg (0);
+	char buffer[4096];
+	off_t offset = 0;
+	while (_internal_file.read (buffer, sizeof (buffer))) {
+		std::streamsize r = _internal_file.gcount (), w = 0;
+		while (w != r) {
+			int ret = new_file->write (buffer+w, r-w, offset+w, &fi);
+			if (ret < 0) {
+				delete new_file;
+				return ret;
+			}
+			w += ret;
+		}
+		offset += r;
+	}
+	if (((ret = new_file->flush (&fi)) < 0) ||
+		((ret = new_file->release (&fi)) < 0)) {
+		delete new_file;
+		return ret;
+	}
+	delete new_file;
+	_internal_file.str ().clear ();
 	return 0;
 }
 

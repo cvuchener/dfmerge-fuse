@@ -24,6 +24,8 @@
 #include <regex>
 #include <set>
 
+#include "FileFactory.h"
+
 extern "C" {
 #include <string.h>
 #include <unistd.h>
@@ -78,19 +80,30 @@ bool FileUnion::findFile () {
 	return false;
 }
 
-void FileUnion::copy (const std::string &newfilename) const {
+int FileUnion::copy (const std::string &newfilename) const {
 	struct stat stbuf;
 	::stat (_real_path.c_str (), &stbuf);
 	int src_fd = ::open (_real_path.c_str (), O_RDONLY);
+	if (-1 == src_fd) {
+		perror ("open");
+		return -errno;
+	}
 	createPath (newfilename, 0755);
 	std::string target_path = _write_branch + newfilename;
 	int dest_fd = ::open (target_path.c_str (), O_WRONLY | O_CREAT | O_EXCL, stbuf.st_mode);
+	if (-1 == dest_fd) {
+		perror ("open");
+		::close (src_fd);
+		return -errno;
+	}
 	char buffer[4096];
 	while (1) {
 		int r;
 		if (-1 == (r = ::read (src_fd, buffer, sizeof (buffer)))) {
 			perror ("read");
-			abort (); // TODO: What to do?
+			::close (src_fd);
+			::close (dest_fd);
+			return -errno;
 		}
 		if (r == 0) // End of file
 			break;
@@ -98,13 +111,16 @@ void FileUnion::copy (const std::string &newfilename) const {
 		while (w != r) {
 			if (-1 == (ret = ::write (dest_fd, buffer+w, r-w))) {
 				perror ("write");
-				abort (); // TODO: What to do?
+				::close (src_fd);
+				::close (dest_fd);
+				return -errno;
 			}
 			w += ret;
 		}
 	}
 	::close (src_fd);
 	::close (dest_fd);
+	return 0;
 }
 
 void FileUnion::createPath (const std::string &filename, mode_t mode) const {
@@ -202,12 +218,67 @@ int FileUnion::rmdir () {
 int FileUnion::rename (const char *new_name) {
 	if (!_exists)
 		return -ENOENT;
-	if (_writable) {
+	int ret;
+	File *new_file = FileFactory::file_factory.newFile (new_name);
+	if (_writable && dynamic_cast<FileUnion *> (new_file)) {
 		if (-1 == ::rename (_real_path.c_str (), (_write_branch + new_name).c_str ()))
 			return -errno;
 	}
 	else {
-		copy (new_name);
+		struct fuse_file_info fi = { .flags = O_WRONLY | O_TRUNC };
+		struct stat stbuf;
+		if ((ret = new_file->getattr (&stbuf)) == -ENOENT) {
+			if ((ret = new_file->create (0600)) < 0) {
+				delete new_file;
+				return ret;
+			}
+		}
+		else if (ret < 0) {
+			delete new_file;
+			return ret;
+		}
+		else {
+			if (((ret = new_file->truncate (0)) < 0) ||
+				((ret = new_file->open (&fi)) < 0)) {
+				delete new_file;
+				return ret;
+			}
+		}
+
+		int src_fd = ::open (_real_path.c_str (), O_RDONLY);
+		if (-1 == src_fd) {
+			perror ("open");
+			delete new_file;
+			return -errno;
+		}
+		char buffer[4096];
+		off_t offset = 0;
+		while (1) {
+			int r;
+			if (-1 == (r = ::read (src_fd, buffer, sizeof (buffer)))) {
+				delete new_file;
+				return -errno;
+			}
+			if (r == 0) // End of file
+				break;
+			int ret, w = 0;
+			while (w != r) {
+				if ((ret = new_file->write (buffer+w, r-w, offset+w, &fi)) < 0) {
+					delete new_file;
+					return ret;
+				}
+				w += ret;
+			}
+			offset += r;
+		}
+		if (((ret = new_file->flush (&fi)) < 0) ||
+			((ret = new_file->release (&fi)) < 0)) {
+			delete new_file;
+			return ret;
+		}
+		delete new_file;
+		if (_writable)
+			::unlink (_real_path.c_str ());
 	}
 	if (findFile ()) {
 		// Hide the files in the read only dirs

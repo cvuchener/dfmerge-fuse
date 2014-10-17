@@ -38,10 +38,11 @@ int main (int argc, char *argv[]) {
 	char *base_dir = argv[2];
 	char *user_dir = argv[3];
 
-	DFDirs dirs (base_dir, user_dir);
+	DFDirs::df_dirs.setBaseGameDir (base_dir);
+	DFDirs::df_dirs.setUserDir (user_dir);
 	for (int i = 4; i < argc; ++i)
-		dirs.addModDir (argv[i]);
+		DFDirs::df_dirs.addModDir (argv[i]);
 
-	DFMergeFuse fs (&dirs);
+	DFMergeFuse fs;
 	return fs.mount (mount_point);
 }

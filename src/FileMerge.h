@@ -51,6 +51,7 @@ public:
 	virtual ~FileMerge ();
 
 	virtual int getattr (struct stat *stbuf) const;
+	virtual int rename (const char *new_name);
 	virtual int truncate (off_t length);
 	virtual int open (struct fuse_file_info *info);
 	virtual int read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info);

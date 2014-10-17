@@ -61,12 +61,16 @@ private:
 	 * @return File was found
 	 */
 	bool findFile ();
+
 	/**
 	 * @brief Copy current file in newfilename in _write_dir
 	 *
 	 * @param target_name
+	 *
+	 * @return 0 if succeeded, -errno otherwise
 	 */
-	void copy (const std::string &newfilename) const;
+	int copy (const std::string &newfilename) const;
+
 	/**
 	 * @brief Create a path in the writable branch (if it does not
 	 * already exists.

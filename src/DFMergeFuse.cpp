@@ -21,15 +21,13 @@
 #include "DFMergeFuse.h"
 
 #include "DFDirs.h"
+#include "FileFactory.h"
 
-#include "FileUnion.h"
-#include "FileDirect.h"
-#include "FileMerge.h"
+#include "File.h"
 
 #include <iostream>
 
 #include <cstring>
-#include <cassert>
 
 extern "C" {
 #include <unistd.h>
@@ -47,7 +45,7 @@ struct FuseOp<T, Ret (*) (Args...)> {
 };
 #define GET_OP(T, func) &FuseOp<T, decltype(fuse_operations::func)>::operation<&T::func>
 
-DFMergeFuse::DFMergeFuse (const DFDirs *dirs): _dirs (dirs) {
+DFMergeFuse::DFMergeFuse () {
 	::memset (&_fuse_ops, 0, sizeof (struct fuse_operations));
 	_fuse_ops.getattr	= GET_OP (DFMergeFuse, getattr);
 	_fuse_ops.mkdir		= GET_OP (DFMergeFuse, mkdir);
@@ -65,35 +63,13 @@ DFMergeFuse::DFMergeFuse (const DFDirs *dirs): _dirs (dirs) {
 	_fuse_ops.readdir	= GET_OP (DFMergeFuse, readdir);
 	_fuse_ops.create	= GET_OP (DFMergeFuse, create);
 	_fuse_ops.init		= GET_OP (DFMergeFuse, init);
-
-	_file_rules.push_back (std::pair<std::regex, FileFactory> (
-				       std::regex ("/data/init/(init|d_init)\\.txt"),
-				       [&] (const std::string &path) -> File * { return new FileMerge<InitData> (path, _dirs->getDirectoryStack (), _dirs->getWriteDirectory ()); }));
-	_file_rules.push_back (std::pair<std::regex, FileFactory> (
-				       std::regex ("/data/init/interface\\.txt"),
-				       [&] (const std::string &path) -> File * { return new FileMerge<InterfaceData> (path, _dirs->getDirectoryStack (), _dirs->getWriteDirectory ()); }));
-	_file_rules.push_back (std::pair<std::regex, FileFactory> (
-				       std::regex ("/data/save/.*"),
-				       [&] (const std::string &path) -> File * { return new FileDirect (path, _dirs->getWriteDirectory ()); }));
-	_default_factory = [&] (const std::string &path) -> File * { return new FileUnion (path, _dirs->getDirectoryStack (), _dirs->getWriteDirectory ()); };
-
 }
 
 int DFMergeFuse::mount (const char *mountpoint) {
-	assert (_dirs != nullptr);
 	struct fuse_chan *chan = ::fuse_mount (mountpoint, nullptr);
 	_fuse = ::fuse_new (chan, nullptr, &_fuse_ops, sizeof (struct fuse_operations), this);
 	::fuse_set_signal_handlers (fuse_get_session (_fuse));
 	return ::fuse_loop_mt (_fuse);
-}
-
-File *DFMergeFuse::newFile (const std::string &path) const {
-	for (const auto &rule: _file_rules) {
-		std::smatch results;
-		if (std::regex_match (path, results, rule.first))
-			return rule.second (path);
-	}
-	return _default_factory (path);
 }
 
 void *DFMergeFuse::init (struct fuse_conn_info *conn) {
@@ -101,62 +77,74 @@ void *DFMergeFuse::init (struct fuse_conn_info *conn) {
 }
 
 int DFMergeFuse::getattr (const char *path, struct stat *statbuf) {
-	File *file = newFile (path);
+	std::cerr << "getattr " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->getattr (statbuf);
 }
 
 int DFMergeFuse::mkdir (const char *path, mode_t mode) {
-	File *file = newFile (path);
+	std::cerr << "mkdir " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->mkdir (mode);
 }
 
 int DFMergeFuse::unlink (const char *path) {
-	File *file = newFile (path);
+	std::cerr << "unlink " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->unlink ();
 }
 
 int DFMergeFuse::rmdir (const char *path) {
-	File *file = newFile (path);
+	std::cerr << "rmdir " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->rmdir ();
 }
 
 int DFMergeFuse::rename (const char *path, const char *new_name) {
-	File *file = newFile (path);
+	std::cerr << "rename " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->rename (new_name);
 }
 
 int DFMergeFuse::chmod (const char *path, mode_t mode) {
-	File *file = newFile (path);
+	std::cerr << "chmod " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->chmod (mode);
 }
 
 int DFMergeFuse::truncate (const char *path, off_t offset) {
-	File *file = newFile (path);
+	std::cerr << "truncate " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	return file->truncate (offset);
 }
 
 int DFMergeFuse::open (const char *path, fuse_file_info *info) {
-	File *file = newFile (path);
+	std::cerr << "open " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	info->fh = _opened_files.insertFile (file);
 	return file->open (info);
 }
 
 int DFMergeFuse::read (const char *path, char *buffer, size_t size, off_t offset, fuse_file_info *info) {
+	std::cerr << "read " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->read (buffer, size, offset, info);
 }
 
 int DFMergeFuse::write (const char *path, const char *buffer, size_t size, off_t offset, fuse_file_info *info) {
+	std::cerr << "write " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->write (buffer, size, offset, info);
 }
 
 int DFMergeFuse::flush (const char *path, fuse_file_info *info) {
+	std::cerr << "flush " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->flush (info);
 }
 
 int DFMergeFuse::release (const char *path, fuse_file_info *info) {
+	std::cerr << "release " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	int ret = file->release (info);
 	_opened_files.removeFile (info->fh);
@@ -170,7 +158,8 @@ int DFMergeFuse::release (const char *path, fuse_file_info *info) {
 }*/
 
 int DFMergeFuse::readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *info) {
-	File *file = newFile (path);
+	std::cerr << "readdir " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	std::vector<std::string> dir_content;
 	int ret = file->readdir (dir_content);
 	if (ret == 0) {
@@ -181,7 +170,8 @@ int DFMergeFuse::readdir (const char *path, void *buf, fuse_fill_dir_t filler, o
 }
 
 int DFMergeFuse::create (const char *path, mode_t mode, fuse_file_info *info) {
-	File *file = newFile (path);
+	std::cerr << "create " << path << std::endl;
+	File *file = FileFactory::file_factory.newFile (path);
 	info->fh = _opened_files.insertFile (file);
 	return file->create (mode);
 }

@@ -20,9 +20,20 @@
 
 #include "DFDirs.h"
 
-DFDirs::DFDirs (const std::string &base_game, const std::string &user_dir):
-	_base_game (base_game), _user_dir (user_dir) {
+DFDirs DFDirs::df_dirs;
+
+DFDirs::DFDirs () {
 }
+
+
+void DFDirs::setBaseGameDir (const std::string &base_game) {
+	_base_game = base_game;
+}
+
+void DFDirs::setUserDir (const std::string &user_dir) {
+	_user_dir = user_dir;
+}
+
 
 void DFDirs::addModDir (const std::string &mod_dir) {
 	_mod_dirs.push_front (mod_dir);

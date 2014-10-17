@@ -27,12 +27,8 @@ extern "C" {
 
 #include <string>
 #include <vector>
-#include <list>
-#include <functional>
-#include <regex>
 
 class File;
-class DFDirs;
 
 /**
  * @brief The DFMergeFuse class implements the FUSE filesystem.
@@ -50,7 +46,7 @@ public:
 	 *
 	 * @param dirs The directories to use in this filesystem.
 	 */
-	DFMergeFuse (const DFDirs *dirs);
+	DFMergeFuse ();
 
 	/**
 	 * @brief Mount the filesystem
@@ -62,15 +58,6 @@ public:
 	int mount (const char *mountpoint);
 
 private:
-	/**
-	 * @brief Instantiate a new File for path.
-	 *
-	 * @param path The file path.
-	 *
-	 * @return The new file object.
-	 */
-	File *newFile (const std::string &path) const;
-
 	// FUSE Operations
 	int getattr (const char *path, struct stat *statbuf);
 	int mkdir (const char *path, mode_t mode);
@@ -92,22 +79,6 @@ private:
 	// FUSE structures
 	struct fuse_operations _fuse_ops;
 	struct fuse *_fuse;
-
-	// DF Dirs
-	const DFDirs *_dirs;
-
-	// Files management
-	typedef std::function<File * (const std::string &path)> FileFactory;
-	/**
-	 * @brief The rules for instantiating new File objects.
-	 *
-	 * newFile use the first FileFactory whose regex was matched with the file path.
-	 */
-	std::list<std::pair<std::regex, FileFactory>> _file_rules;
-	/**
-	 * @brief The default FileFactory used by newFile if no regex in _files_rules was matched.
-	 */
-	FileFactory _default_factory;
 
 	/**
 	 * @brief A file index for keeping track of opened File objects.

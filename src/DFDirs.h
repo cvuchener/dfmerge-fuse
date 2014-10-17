@@ -25,7 +25,7 @@
 #include <list>
 
 /**
- * @brief The DFDirs class is used to pass the direcctories to be merged
+ * @brief The DFDirs class is used to store the directories to be merged
  * by the file system.
  *
  * It contains at least a base game directory and a writable directory
@@ -35,12 +35,18 @@
 class DFDirs {
 public:
 	/**
-	 * @brief DFDirs constructor
+	 * @brief Set the base game directory.
 	 *
 	 * @param base_game The base game directory.
+	 */
+	void setBaseGameDir (const std::string &base_game);
+
+	/**
+	 * @brief Set the user files directory
+	 *
 	 * @param user_dir A writable directory for user files.
 	 */
-	DFDirs (const std::string &base_game, const std::string &user_dir);
+	void setUserDir (const std::string &user_dir);
 
 	/**
 	 * @brief Add a mod directory.
@@ -69,7 +75,14 @@ public:
 	 */
 	std::string getWriteDirectory () const;
 
+	/**
+	 * @brief DFDirs singleton
+	 */
+	static DFDirs df_dirs;
+
 private:
+	DFDirs ();
+
 	std::string _base_game;
 	std::string _user_dir;
 	std::list<std::string> _mod_dirs;
