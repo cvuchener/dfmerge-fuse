@@ -122,31 +122,31 @@ int DFMergeFuse::open (const char *path, fuse_file_info *info) {
 	std::cerr << "open " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	info->fh = _opened_files.insertFile (file);
-	return file->open (info);
+	return file->open (info->flags);
 }
 
 int DFMergeFuse::read (const char *path, char *buffer, size_t size, off_t offset, fuse_file_info *info) {
 	std::cerr << "read " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
-	return file->read (buffer, size, offset, info);
+	return file->read (buffer, size, offset);
 }
 
 int DFMergeFuse::write (const char *path, const char *buffer, size_t size, off_t offset, fuse_file_info *info) {
 	std::cerr << "write " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
-	return file->write (buffer, size, offset, info);
+	return file->write (buffer, size, offset);
 }
 
 int DFMergeFuse::flush (const char *path, fuse_file_info *info) {
 	std::cerr << "flush " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
-	return file->flush (info);
+	return file->flush ();
 }
 
 int DFMergeFuse::release (const char *path, fuse_file_info *info) {
 	std::cerr << "release " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
-	int ret = file->release (info);
+	int ret = file->release (info->flags);
 	_opened_files.removeFile (info->fh);
 	delete file;
 	return ret;

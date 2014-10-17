@@ -63,8 +63,8 @@ int FileMerge<DataModel>::getattr (struct stat *stbuf) const {
 template <class DataModel>
 int FileMerge<DataModel>::rename (const char *new_name) {
 	int ret;
+	int flags = O_WRONLY | O_TRUNC;
 	File *new_file = FileFactory::file_factory.newFile (new_name);
-	struct fuse_file_info fi = { .flags = O_WRONLY | O_TRUNC };
 	struct stat stbuf;
 	if ((ret = new_file->getattr (&stbuf)) == -ENOENT) {
 		if ((ret = new_file->create (0600)) < 0) {
@@ -78,7 +78,7 @@ int FileMerge<DataModel>::rename (const char *new_name) {
 	}
 	else {
 		if (((ret = new_file->truncate (0)) < 0) ||
-			((ret = new_file->open (&fi)) < 0)) {
+			((ret = new_file->open (flags)) < 0)) {
 			delete new_file;
 			return ret;
 		}
@@ -91,7 +91,7 @@ int FileMerge<DataModel>::rename (const char *new_name) {
 	while (_internal_file.read (buffer, sizeof (buffer))) {
 		std::streamsize r = _internal_file.gcount (), w = 0;
 		while (w != r) {
-			int ret = new_file->write (buffer+w, r-w, offset+w, &fi);
+			int ret = new_file->write (buffer+w, r-w, offset+w);
 			if (ret < 0) {
 				delete new_file;
 				return ret;
@@ -100,8 +100,8 @@ int FileMerge<DataModel>::rename (const char *new_name) {
 		}
 		offset += r;
 	}
-	if (((ret = new_file->flush (&fi)) < 0) ||
-		((ret = new_file->release (&fi)) < 0)) {
+	if (((ret = new_file->flush ()) < 0) ||
+		((ret = new_file->release (flags)) < 0)) {
 		delete new_file;
 		return ret;
 	}
@@ -120,14 +120,14 @@ int FileMerge<DataModel>::truncate (off_t length) {
 }
 
 template <class DataModel>
-int FileMerge<DataModel>::open (struct fuse_file_info *info) {
-	if (!_readonly && info->flags & O_TRUNC)
+int FileMerge<DataModel>::open (int flags) {
+	if (!_readonly && flags & O_TRUNC)
 		_internal_file.clear ();
 	return 0;
 }
 
 template <class DataModel>
-int FileMerge<DataModel>::read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileMerge<DataModel>::read (char *buffer, size_t size, off_t offset) {
 	_internal_file.clear ();
 	_internal_file.seekg (offset);
 	_internal_file.read (buffer, size);
@@ -135,7 +135,7 @@ int FileMerge<DataModel>::read (char *buffer, size_t size, off_t offset, struct 
 }
 
 template <class DataModel>
-int FileMerge<DataModel>::write (const char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileMerge<DataModel>::write (const char *buffer, size_t size, off_t offset) {
 	if (_readonly)
 		return -EBADF;
 	_internal_file.clear ();
@@ -145,14 +145,14 @@ int FileMerge<DataModel>::write (const char *buffer, size_t size, off_t offset, 
 }
 
 template <class DataModel>
-int FileMerge<DataModel>::flush (struct fuse_file_info *info) {
+int FileMerge<DataModel>::flush () {
 	if (!_readonly)
 		saveToDisk ();
 	return 0;
 }
 
 template <class DataModel>
-int FileMerge<DataModel>::release (struct fuse_file_info *info) {
+int FileMerge<DataModel>::release (int flags) {
 	return 0;
 }
 

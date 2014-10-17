@@ -68,23 +68,23 @@ int File::truncate (off_t length) {
 	UNIMPLEMENTED;
 }
 
-int File::open (struct fuse_file_info *info) {
+int File::open (int flags) {
 	UNIMPLEMENTED;
 }
 
-int File::read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int File::read (char *buffer, size_t size, off_t offset) {
 	UNIMPLEMENTED;
 }
 
-int File::write (const char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int File::write (const char *buffer, size_t size, off_t offset) {
 	UNIMPLEMENTED;
 }
 
-int File::flush (struct fuse_file_info *info) {
+int File::flush () {
 	UNIMPLEMENTED;
 }
 
-int File::release (struct fuse_file_info *info) {
+int File::release (int flags) {
 	UNIMPLEMENTED;
 }
 

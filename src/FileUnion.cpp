@@ -225,7 +225,7 @@ int FileUnion::rename (const char *new_name) {
 			return -errno;
 	}
 	else {
-		struct fuse_file_info fi = { .flags = O_WRONLY | O_TRUNC };
+		int flags = O_WRONLY | O_TRUNC;
 		struct stat stbuf;
 		if ((ret = new_file->getattr (&stbuf)) == -ENOENT) {
 			if ((ret = new_file->create (0600)) < 0) {
@@ -239,7 +239,7 @@ int FileUnion::rename (const char *new_name) {
 		}
 		else {
 			if (((ret = new_file->truncate (0)) < 0) ||
-				((ret = new_file->open (&fi)) < 0)) {
+				((ret = new_file->open (flags)) < 0)) {
 				delete new_file;
 				return ret;
 			}
@@ -264,7 +264,7 @@ int FileUnion::rename (const char *new_name) {
 				break;
 			int ret, w = 0;
 			while (w != r) {
-				if ((ret = new_file->write (buffer+w, r-w, offset+w, &fi)) < 0) {
+				if ((ret = new_file->write (buffer+w, r-w, offset+w)) < 0) {
 					delete new_file;
 					::close (src_fd);
 					return ret;
@@ -274,8 +274,8 @@ int FileUnion::rename (const char *new_name) {
 			offset += r;
 		}
 		::close (src_fd);
-		if (((ret = new_file->flush (&fi)) < 0) ||
-			((ret = new_file->release (&fi)) < 0)) {
+		if (((ret = new_file->flush ()) < 0) ||
+			((ret = new_file->release (flags)) < 0)) {
 			delete new_file;
 			return ret;
 		}
@@ -306,14 +306,14 @@ int FileUnion::truncate (off_t length) {
 	return 0;
 }
 
-int FileUnion::open (struct fuse_file_info *info) {
-	_fd = ::open (_real_path.c_str (), (_writable ? info->flags : O_RDONLY));
+int FileUnion::open (int flags) {
+	_fd = ::open (_real_path.c_str (), (_writable ? flags : O_RDONLY));
 	if (-1 == _fd)
 		return -errno;
 	return 0;
 }
 
-int FileUnion::read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileUnion::read (char *buffer, size_t size, off_t offset) {
 	if (-1 == ::lseek (_fd, offset, SEEK_SET))
 		return -errno;
 	int ret;
@@ -322,7 +322,7 @@ int FileUnion::read (char *buffer, size_t size, off_t offset, struct fuse_file_i
 	return ret;
 }
 
-int FileUnion::write (const char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileUnion::write (const char *buffer, size_t size, off_t offset) {
 	if (!_writable) { // Copy on write
 		::close (_fd);
 		copy (_path);
@@ -338,11 +338,11 @@ int FileUnion::write (const char *buffer, size_t size, off_t offset, struct fuse
 	return ret;
 }
 
-int FileUnion::flush (struct fuse_file_info *info) {
+int FileUnion::flush () {
 	return 0;
 }
 
-int FileUnion::release (struct fuse_file_info *info) {
+int FileUnion::release (int flags) {
 	::close (_fd);
 	return 0;
 }

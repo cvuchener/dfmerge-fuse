@@ -79,13 +79,13 @@ int FileDirect::truncate (off_t length) {
 	return 0;
 }
 
-int FileDirect::open (struct fuse_file_info *info) {
-	if (-1 == (_fd = ::open ((_branch + _path).c_str (), info->flags)))
+int FileDirect::open (int flags) {
+	if (-1 == (_fd = ::open ((_branch + _path).c_str (), flags)))
 		return -errno;
 	return 0;
 }
 
-int FileDirect::read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileDirect::read (char *buffer, size_t size, off_t offset) {
 	int r;
 	if (-1 == ::lseek (_fd, offset, SEEK_SET))
 		return -errno;
@@ -94,7 +94,7 @@ int FileDirect::read (char *buffer, size_t size, off_t offset, struct fuse_file_
 	return r;
 }
 
-int FileDirect::write (const char *buffer, size_t size, off_t offset, struct fuse_file_info *info) {
+int FileDirect::write (const char *buffer, size_t size, off_t offset) {
 	int w;
 	if (-1 == ::lseek (_fd, offset, SEEK_SET))
 		return -errno;
@@ -103,13 +103,13 @@ int FileDirect::write (const char *buffer, size_t size, off_t offset, struct fus
 	return w;
 }
 
-int FileDirect::flush (struct fuse_file_info *info) {
+int FileDirect::flush () {
 	if (-1 == ::fdatasync (_fd))
 		return -errno;
 	return 0;
 }
 
-int FileDirect::release (struct fuse_file_info *info) {
+int FileDirect::release (int flags) {
 	if (-1 == ::close (_fd))
 		return -errno;
 	return 0;

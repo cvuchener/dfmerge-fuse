@@ -46,11 +46,11 @@ public:
 	virtual int rmdir ();
 	virtual int rename (const char *new_name);
 	virtual int truncate (off_t length);
-	virtual int open (struct fuse_file_info *info);
-	virtual int read (char *buffer, size_t size, off_t offset, struct fuse_file_info *info);
-	virtual int write (const char *buffer, size_t size, off_t offset, struct fuse_file_info *info);
-	virtual int flush (struct fuse_file_info *info);
-	virtual int release (struct fuse_file_info *info);
+	virtual int open (int flags);
+	virtual int read (char *buffer, size_t size, off_t offset);
+	virtual int write (const char *buffer, size_t size, off_t offset);
+	virtual int flush ();
+	virtual int release (int flags);
 	virtual int readdir (std::vector<std::string> &dir_content) const;
 	virtual int create (mode_t mode);
 
