@@ -44,7 +44,7 @@ int FileDirect::getattr (struct stat *stbuf) const {
 }
 
 int FileDirect::mkdir (mode_t mode) {
-	if (-1 == ::mkdir ((_branch + _path).c_str (), mode));
+	if (-1 == ::mkdir ((_branch + _path).c_str (), mode))
 		return -errno;
 	return 0;
 }
@@ -104,7 +104,8 @@ int FileDirect::write (const char *buffer, size_t size, off_t offset, struct fus
 }
 
 int FileDirect::flush (struct fuse_file_info *info) {
-	// TODO: fsync?
+	if (-1 == ::fdatasync (_fd))
+		return -errno;
 	return 0;
 }
 
@@ -124,13 +125,14 @@ int FileDirect::readdir (std::vector<std::string> &dir_content) const {
 	while (nullptr != (ent = ::readdir (dir))) {
 		dir_content.push_back (ent->d_name);
 	}
+	::closedir (dir);
 	if (errno != 0)
 		return -errno;
 	return 0;
 }
 
 int FileDirect::create (mode_t mode) {
-	if (-1 == ::creat ((_branch + _path).c_str (), mode))
+	if (-1 == (_fd = ::creat ((_branch + _path).c_str (), mode)))
 		return -errno;
 	return 0;
 }

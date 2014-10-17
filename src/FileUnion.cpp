@@ -257,6 +257,7 @@ int FileUnion::rename (const char *new_name) {
 			int r;
 			if (-1 == (r = ::read (src_fd, buffer, sizeof (buffer)))) {
 				delete new_file;
+				::close (src_fd);
 				return -errno;
 			}
 			if (r == 0) // End of file
@@ -265,12 +266,14 @@ int FileUnion::rename (const char *new_name) {
 			while (w != r) {
 				if ((ret = new_file->write (buffer+w, r-w, offset+w, &fi)) < 0) {
 					delete new_file;
+					::close (src_fd);
 					return ret;
 				}
 				w += ret;
 			}
 			offset += r;
 		}
+		::close (src_fd);
 		if (((ret = new_file->flush (&fi)) < 0) ||
 			((ret = new_file->release (&fi)) < 0)) {
 			delete new_file;
@@ -364,6 +367,7 @@ int FileUnion::readdir (std::vector<std::string> &dir_content) const {
 				content.insert (filename);
 			}
 		}
+		::closedir (dir);
 	}
 	for (const std::string &hiddenfile: hidden) {
 		content.erase (hiddenfile);
