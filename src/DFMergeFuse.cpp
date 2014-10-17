@@ -77,74 +77,62 @@ void *DFMergeFuse::init (struct fuse_conn_info *conn) {
 }
 
 int DFMergeFuse::getattr (const char *path, struct stat *statbuf) {
-	std::cerr << "getattr " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->getattr (statbuf);
 }
 
 int DFMergeFuse::mkdir (const char *path, mode_t mode) {
-	std::cerr << "mkdir " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->mkdir (mode);
 }
 
 int DFMergeFuse::unlink (const char *path) {
-	std::cerr << "unlink " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->unlink ();
 }
 
 int DFMergeFuse::rmdir (const char *path) {
-	std::cerr << "rmdir " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->rmdir ();
 }
 
 int DFMergeFuse::rename (const char *path, const char *new_name) {
-	std::cerr << "rename " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->rename (new_name);
 }
 
 int DFMergeFuse::chmod (const char *path, mode_t mode) {
-	std::cerr << "chmod " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->chmod (mode);
 }
 
 int DFMergeFuse::truncate (const char *path, off_t offset) {
-	std::cerr << "truncate " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	return file->truncate (offset);
 }
 
 int DFMergeFuse::open (const char *path, fuse_file_info *info) {
-	std::cerr << "open " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	info->fh = _opened_files.insertFile (file);
 	return file->open (info->flags);
 }
 
 int DFMergeFuse::read (const char *path, char *buffer, size_t size, off_t offset, fuse_file_info *info) {
-	std::cerr << "read " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->read (buffer, size, offset);
 }
 
 int DFMergeFuse::write (const char *path, const char *buffer, size_t size, off_t offset, fuse_file_info *info) {
-	std::cerr << "write " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->write (buffer, size, offset);
 }
 
 int DFMergeFuse::flush (const char *path, fuse_file_info *info) {
-	std::cerr << "flush " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	return file->flush ();
 }
 
 int DFMergeFuse::release (const char *path, fuse_file_info *info) {
-	std::cerr << "release " << path << std::endl;
 	File *file = _opened_files.getFile (info->fh);
 	int ret = file->release (info->flags);
 	_opened_files.removeFile (info->fh);
@@ -158,7 +146,6 @@ int DFMergeFuse::release (const char *path, fuse_file_info *info) {
 }*/
 
 int DFMergeFuse::readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *info) {
-	std::cerr << "readdir " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	std::vector<std::string> dir_content;
 	int ret = file->readdir (dir_content);
@@ -170,7 +157,6 @@ int DFMergeFuse::readdir (const char *path, void *buf, fuse_fill_dir_t filler, o
 }
 
 int DFMergeFuse::create (const char *path, mode_t mode, fuse_file_info *info) {
-	std::cerr << "create " << path << std::endl;
 	File *file = FileFactory::file_factory.newFile (path);
 	info->fh = _opened_files.insertFile (file);
 	return file->create (mode);
