@@ -65,6 +65,7 @@ private:
 	std::list<std::string> _branches;
 	std::string _write_branch;
 	bool _readonly;
+	bool _modified;
 	std::stringstream _internal_file;
 };
 

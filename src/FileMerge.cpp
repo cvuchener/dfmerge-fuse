@@ -121,8 +121,12 @@ int FileMerge<DataModel>::truncate (off_t length) {
 
 template <class DataModel>
 int FileMerge<DataModel>::open (int flags) {
-	if (!_readonly && flags & O_TRUNC)
+	if (!_readonly && flags & O_TRUNC) {
 		_internal_file.clear ();
+		_modified = true;
+	}
+	else
+		_modified = false;
 	return 0;
 }
 
@@ -138,6 +142,7 @@ template <class DataModel>
 int FileMerge<DataModel>::write (const char *buffer, size_t size, off_t offset) {
 	if (_readonly)
 		return -EBADF;
+	_modified = true;
 	_internal_file.clear ();
 	_internal_file.seekp (offset);
 	_internal_file.write (buffer, size);
@@ -146,7 +151,7 @@ int FileMerge<DataModel>::write (const char *buffer, size_t size, off_t offset) 
 
 template <class DataModel>
 int FileMerge<DataModel>::flush () {
-	if (!_readonly)
+	if (!_readonly && _modified)
 		saveToDisk ();
 	return 0;
 }
