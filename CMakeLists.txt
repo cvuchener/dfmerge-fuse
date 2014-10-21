@@ -1,7 +1,5 @@
-project(dfmerge-fuse)
 cmake_minimum_required(VERSION 2.8)
-aux_source_directory(src SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+project(dfmerge-fuse)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
@@ -20,9 +18,16 @@ endif()
 # FUSE library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(FUSE 2.6 REQUIRED)
-if(FUSE_FOUND)
-	add_definitions(${FUSE_DEFINITIONS})
-	add_definitions("-DFUSE_USE_VERSION=26")
-	include_directories(${FUSE_INCLUDE_DIRS})
-	target_link_libraries(${PROJECT_NAME} ${FUSE_LIBRARIES})
-endif()
+
+
+aux_source_directory(src/file-formats FILEFORMATS_SOURCES)
+add_library(file-formats OBJECT ${FILEFORMATS_SOURCES})
+
+aux_source_directory(src/dfmerge-fuse DFMERGEFUSE_SOURCES)
+add_executable(dfmerge-fuse ${DFMERGEFUSE_SOURCES} $<TARGET_OBJECTS:file-formats>)
+set_target_properties(dfmerge-fuse PROPERTIES COMPILE_FLAGS "${FUSE_DEFINITIONS} -DFUSE_USE_VERSION=26")
+target_include_directories(dfmerge-fuse PUBLIC ${FUSE_INCLUDE_DIRS})
+target_link_libraries(dfmerge-fuse ${FUSE_LIBRARIES})
+
+aux_source_directory(src/dfdiff DFDIFF_SOURCES)
+add_executable(dfdiff ${DFDIFF_SOURCES} $<TARGET_OBJECTS:file-formats>)

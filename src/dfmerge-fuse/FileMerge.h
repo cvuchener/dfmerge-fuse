@@ -70,8 +70,8 @@ private:
 };
 
 // Types instantiated in FileMerge.cpp
-#include "InitData.h"
-#include "InterfaceData.h"
+#include "../file-formats/InitData.h"
+#include "../file-formats/InterfaceData.h"
 extern template class FileMerge<InitData>;
 extern template class FileMerge<InterfaceData>;
 

@@ -23,9 +23,21 @@ Use cmake to build:
 Usage
 -----
 
+### Mount filesystem
+
     dfmerge-fuse <mount_point> <base_game> <user_dir> [<mod_dir> ...]
 
  * `mount_point` Directory where the merged filesystem will be mounted.
  * `base_game` Vanilla game directory.
  * `user_dir` Directory used to store user files.
  * `mod_dir` Mod directories.
+
+### Get patch file from full files
+
+    dfdiff init|interface base_file mod_file
+
+Print the path file on the standard output
+
+ * `init`|`interface` Algorithm to use
+ * `base_file` File from the base game
+ * `mod_file` Full file from the mod
