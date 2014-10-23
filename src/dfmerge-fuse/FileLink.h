@@ -25,7 +25,7 @@
 
 class FileLink: public File {
 public:
-	FileLink (const std::string &path, const std::string &target, bool ignore_modifications = false);
+	FileLink (const std::string &path, const std::string &target, bool readonly = false);
 	virtual ~FileLink ();
 
 	// FUSE Operations
@@ -47,7 +47,7 @@ public:
 
 private:
 	File *_target_file;
-	bool _ignore_modifications;
+	bool _readonly;
 };
 
 #endif // FILE_LINK_H

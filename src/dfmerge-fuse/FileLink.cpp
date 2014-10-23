@@ -22,8 +22,8 @@
 
 #include "FileFactory.h"
 
-FileLink::FileLink (const std::string &path, const std::string &target, bool ignore_modifications):
-	File (path, "link"), _target_file (FileFactory::file_factory.newFile (target)), _ignore_modifications (ignore_modifications) {
+FileLink::FileLink (const std::string &path, const std::string &target, bool readonly):
+	File (path, "link"), _target_file (FileFactory::file_factory.newFile (target)), _readonly (readonly) {
 
 }
 
@@ -36,38 +36,38 @@ int FileLink::getattr (struct stat *stbuf) const {
 }
 
 int FileLink::mkdir (mode_t mode) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->mkdir (mode);
 }
 
 int FileLink::unlink () {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->unlink ();
 }
 
 int FileLink::rmdir () {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->rmdir ();
 }
 
 int FileLink::rename (const char *new_name) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->rename (new_name);
 }
 
 int FileLink::chmod (mode_t mode) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->chmod (mode);
 }
 
 int FileLink::truncate (off_t length) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->truncate (length);
 }
 
@@ -80,14 +80,14 @@ int FileLink::read (char *buffer, size_t size, off_t offset) {
 }
 
 int FileLink::write (const char *buffer, size_t size, off_t offset) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->write (buffer, size, offset);
 }
 
 int FileLink::flush () {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->flush ();
 }
 
@@ -100,7 +100,7 @@ int FileLink::readdir (std::vector<std::string> &dir_content) const {
 }
 
 int FileLink::create (mode_t mode) {
-	if (_ignore_modifications)
-		return -ENOSYS;
+	if (_readonly)
+		return -EACCES;
 	return _target_file->create (mode);
 }
