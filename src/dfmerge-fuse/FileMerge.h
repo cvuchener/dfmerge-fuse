@@ -72,7 +72,9 @@ private:
 // Types instantiated in FileMerge.cpp
 #include "../file-formats/InitData.h"
 #include "../file-formats/InterfaceData.h"
+#include "../file-formats/OverridesData.h"
 extern template class FileMerge<InitData>;
 extern template class FileMerge<InterfaceData>;
+extern template class FileMerge<OverridesData>;
 
 #endif // FILE_MERGE_H

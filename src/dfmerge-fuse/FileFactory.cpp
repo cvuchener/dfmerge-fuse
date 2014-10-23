@@ -49,6 +49,12 @@ FileFactory::FileFactory () {
 		}));
 
 	_rules.push_back (std::pair<std::regex, factory_t> (
+		std::regex ("/data/init/overrides\\.txt"),
+		[] (const std::string &path) -> File * {
+			return new FileMerge<OverridesData> (path, DFDirs::df_dirs.getDirectoryStack (), DFDirs::df_dirs.getWriteDirectory (), true);
+		}));
+
+	_rules.push_back (std::pair<std::regex, factory_t> (
 		std::regex ("/data/save(/.*)?"),
 		[] (const std::string &path) -> File * {
 			return new FileDirect (path, DFDirs::df_dirs.getWriteDirectory ());

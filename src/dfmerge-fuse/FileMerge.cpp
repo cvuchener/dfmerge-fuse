@@ -188,3 +188,4 @@ void FileMerge<DataModel>::saveToDisk () {
 // Template instantiations
 template class FileMerge<InitData>;
 template class FileMerge<InterfaceData>;
+template class FileMerge<OverridesData>;
