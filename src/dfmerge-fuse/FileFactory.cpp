@@ -24,37 +24,38 @@
 #include "FileUnion.h"
 #include "FileDirect.h"
 #include "FileMerge.h"
+#include "FileLink.h"
 
 FileFactory FileFactory::file_factory;
 
 FileFactory::FileFactory () {
 	_rules.push_back (std::pair<std::regex, factory_t> (
-		std::regex ("/data/init/(init|d_init)\\.txt"),
+		std::regex ("/data/save/(current|(region[0-9]+))/raw(/.*)?"),
 		[] (const std::string &path) -> File * {
-			return new FileMerge<InitData> (path,
-											DFDirs::df_dirs.getDirectoryStack (),
-											DFDirs::df_dirs.getWriteDirectory ());
+			std::string target = std::regex_replace (path, std::regex ("^/data/save/(current|(region[0-9]+))/raw"), "/raw");
+			return new FileLink (path, target, true);
 		}));
 
 	_rules.push_back (std::pair<std::regex, factory_t> (
-		std::regex ("/data/init/interface(-test)?\\.txt"),
+		std::regex ("/data/init/(init|d_init)\\.txt"),
 		[] (const std::string &path) -> File * {
-			return new FileMerge<InterfaceData> (path,
-												 DFDirs::df_dirs.getDirectoryStack (),
-												 DFDirs::df_dirs.getWriteDirectory ());
+			return new FileMerge<InitData> (path, DFDirs::df_dirs.getDirectoryStack (), DFDirs::df_dirs.getWriteDirectory ());
+		}));
+
+	_rules.push_back (std::pair<std::regex, factory_t> (
+		std::regex ("/data/init/interface\\.txt"),
+		[] (const std::string &path) -> File * {
+			return new FileMerge<InterfaceData> (path, DFDirs::df_dirs.getDirectoryStack (), DFDirs::df_dirs.getWriteDirectory ());
 		}));
 
 	_rules.push_back (std::pair<std::regex, factory_t> (
 		std::regex ("/data/save(/.*)?"),
 		[] (const std::string &path) -> File * {
-			return new FileDirect (path,
-								   DFDirs::df_dirs.getWriteDirectory ());
+			return new FileDirect (path, DFDirs::df_dirs.getWriteDirectory ());
 		}));
 
 	_default_factory = [] (const std::string &path) -> File * {
-		return new FileUnion (path,
-							  DFDirs::df_dirs.getDirectoryStack (),
-							  DFDirs::df_dirs.getWriteDirectory ());
+		return new FileUnion (path, DFDirs::df_dirs.getDirectoryStack (), DFDirs::df_dirs.getWriteDirectory ());
 	};
 }
 
