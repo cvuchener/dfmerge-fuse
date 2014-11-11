@@ -4,8 +4,10 @@ dfmerge-fuse
 dfmerge-fuse is a FUSE filesystem for merging Dwarf Fortress files from several branches (vanilla game, mods, user files, ...). It uses different schemes depending on the file path:
  * Merging specific DF file format, currently:
    - Init files (init.txt, d_init.txt): unique tokens identified by their first value.
-   - Interface.txt
+   - interface.txt
+   - TWBT overrides.txt with handling of tileset ids collisions
  * Direct file access for savegames.
+ * Linking raws in save directory to the general raws
  * UnionFS-like for other files.
 
 How to build
@@ -38,6 +40,6 @@ Usage
 
 Print the path file on the standard output
 
- * `init`|`interface` Algorithm to use
+ * `init|interface` Algorithm to use
  * `base_file` File from the base game
  * `mod_file` Full file from the mod
