@@ -36,7 +36,7 @@ void OverridesData::write (std::ostream &stream) {
 		writeToken (stream, "TILESET", tileset.second.font, tileset.second.fullfont, tileset.first);
 	}
 	for (const auto &override: _overrides) {
-		writeToken (stream, override);
+		writeToken (stream, "OVERRIDE", override.first, override.second);
 	}
 }
 
@@ -65,16 +65,15 @@ void OverridesData::merge (const OverridesData &other) {
 	}
 
 	for (const auto &override: other._overrides) {
-		std::vector<std::string> translated_override (override);
-		int tileset_field;
-		if (override[2] == "T")
-			tileset_field = 4;
+		std::vector<std::string> translated_override (override.second);
+		std::map<std::string, std::string>::const_iterator tr_it;
+		if ((tr_it = tileset_translation.find (override.second[0])) != tileset_translation.end ())
+			translated_override[0] = tr_it->second;
+		std::map<std::vector<std::string>, std::vector<std::string>>::iterator or_it;
+		if ((or_it = _overrides.find (override.first)) != _overrides.end ())
+			or_it->second = translated_override;
 		else
-			tileset_field = 6;
-		std::map<std::string, std::string>::const_iterator it;
-		if ((it = tileset_translation.find (override[tileset_field])) != tileset_translation.end ())
-			translated_override[tileset_field] = it->second;
-		_overrides.push_back (translated_override);
+			_overrides.emplace (override.first, translated_override);
 	}
 }
 
@@ -84,9 +83,19 @@ void OverridesData::diff (const OverridesData &other) {
 
 void OverridesData::processToken (const std::vector<std::string> &values) {
 	if (values[0] == "TILESET") {
-		_tilesets[values[3]] = (struct tileset_t) { .font = values[1], .fullfont = values[2] };
+		_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
 	}
 	else if (values[0] == "OVERRIDE") {
-		_overrides.push_back (values);
+		std::vector<std::string> key, value;
+		unsigned int tileset_index = (values[2] == "T" ? 4 : 6);
+		for (unsigned int i = 1; i < tileset_index; ++i)
+			key.push_back (values[i]);
+		for (unsigned int i = tileset_index; i < values.size (); ++i)
+			value.push_back (values[i]);
+		std::map<std::vector<std::string>, std::vector<std::string>>::iterator it;
+		if ((it = _overrides.find (key)) != _overrides.end ())
+			it->second = value;
+		else
+			_overrides.emplace (key, value);
 	}
 }

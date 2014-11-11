@@ -46,8 +46,18 @@ private:
 	struct tileset_t {
 		std::string font, fullfont;
 	};
+
 	std::map<std::string, tileset_t> _tilesets;
-	std::vector<std::vector<std::string>> _overrides;
+
+	/**
+	 * @brief Store the overrides in a map in order to easily find similar overrides
+	 *
+	 * The key is the values identifying the override:
+	 * Old tile, kind, id, type, sub-type
+	 * The value is the new tile display options
+	 * New tileset, new tile, new colors
+	 */
+	std::map<std::vector<std::string>, std::vector<std::string>> _overrides;
 };
 
 #endif // OVERRIDES_DATA_H
