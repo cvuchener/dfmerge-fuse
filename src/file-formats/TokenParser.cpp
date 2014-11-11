@@ -20,7 +20,7 @@
 
 #include "TokenParser.h"
 
-const std::regex TokenParser::TOKEN_REGEX ("\\[([^\\]]*)\\]");
+const std::regex TokenParser::TOKEN_REGEX ("^[ \t]*\\[([^\\]]*)\\]");
 
 TokenParser::TokenParser () {
 }
