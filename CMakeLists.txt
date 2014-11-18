@@ -19,15 +19,17 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(FUSE 2.6 REQUIRED)
 
+aux_source_directory(src/utils UTILS_SOURCES)
+add_library(utils OBJECT ${UTILS_SOURCES})
 
 aux_source_directory(src/file-formats FILEFORMATS_SOURCES)
 add_library(file-formats OBJECT ${FILEFORMATS_SOURCES})
 
 aux_source_directory(src/dfmerge-fuse DFMERGEFUSE_SOURCES)
-add_executable(dfmerge-fuse ${DFMERGEFUSE_SOURCES} $<TARGET_OBJECTS:file-formats>)
+add_executable(dfmerge-fuse ${DFMERGEFUSE_SOURCES} $<TARGET_OBJECTS:utils> $<TARGET_OBJECTS:file-formats>)
 set_target_properties(dfmerge-fuse PROPERTIES COMPILE_FLAGS "${FUSE_DEFINITIONS} -DFUSE_USE_VERSION=26")
 target_include_directories(dfmerge-fuse PUBLIC ${FUSE_INCLUDE_DIRS})
 target_link_libraries(dfmerge-fuse ${FUSE_LIBRARIES})
 
 aux_source_directory(src/dfdiff DFDIFF_SOURCES)
-add_executable(dfdiff ${DFDIFF_SOURCES} $<TARGET_OBJECTS:file-formats>)
+add_executable(dfdiff ${DFDIFF_SOURCES} $<TARGET_OBJECTS:utils> $<TARGET_OBJECTS:file-formats>)

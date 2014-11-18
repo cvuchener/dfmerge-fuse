@@ -36,6 +36,8 @@ extern "C" {
 #include <fuse.h>
 }
 
+#include "../utils/string.h"
+
 #define HIDDEN_SUFFIX	"_HIDDEN"
 
 FileUnion::FileUnion (const std::string &path, const std::list<std::string> &branches, const std::string &write_branch):
@@ -124,13 +126,8 @@ int FileUnion::copy (const std::string &newfilename) const {
 }
 
 void FileUnion::createPath (const std::string &filename, mode_t mode) const {
-	std::vector<std::string> path;
-	std::string::size_type pos = 1; // Ignore the '/' at the start of the path
-	std::string::size_type sep;
-	while (std::string::npos != (sep = filename.find ('/', pos))) {
-		path.push_back (filename.substr (pos, sep-pos));
-		pos = sep+1;
-	}
+	std::vector<std::string> path = utils::split (filename.substr (1), '/', false);
+	path.pop_back (); // Remove the filename
 	std::string current = _write_branch;
 	for (const std::string &dir: path) {
 		current += "/" + dir;
