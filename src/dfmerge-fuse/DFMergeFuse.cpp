@@ -78,37 +78,51 @@ void *DFMergeFuse::init (struct fuse_conn_info *conn) {
 
 int DFMergeFuse::getattr (const char *path, struct stat *statbuf) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->getattr (statbuf);
+	int ret = file->getattr (statbuf);
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::mkdir (const char *path, mode_t mode) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->mkdir (mode);
+	int ret = file->mkdir (mode);
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::unlink (const char *path) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->unlink ();
+	int ret = file->unlink ();
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::rmdir (const char *path) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->rmdir ();
+	int ret = file->rmdir ();
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::rename (const char *path, const char *new_name) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->rename (new_name);
+	int ret = file->rename (new_name);
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::chmod (const char *path, mode_t mode) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->chmod (mode);
+	int ret = file->chmod (mode);
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::truncate (const char *path, off_t offset) {
 	File *file = FileFactory::file_factory.newFile (path);
-	return file->truncate (offset);
+	int ret = file->truncate (offset);
+	delete file;
+	return ret;
 }
 
 int DFMergeFuse::open (const char *path, fuse_file_info *info) {
@@ -153,6 +167,7 @@ int DFMergeFuse::readdir (const char *path, void *buf, fuse_fill_dir_t filler, o
 		for (auto it = dir_content.begin (); it != dir_content.end (); ++it)
 			filler (buf, (*it).c_str (), nullptr, 0);
 	}
+	delete file;
 	return ret;
 }
 
