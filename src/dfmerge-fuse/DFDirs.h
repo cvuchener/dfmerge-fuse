@@ -59,6 +59,25 @@ public:
 	void addModDir (const std::string &mod_dir);
 
 	/**
+	 * @brief Add a directory for finding mods
+	 *
+	 * The new directory will be searched before previously added
+	 * directories
+	 *
+	 * @param mod_search_dir A directory containing mods
+	 */
+	void addModSearchDir (const std::string &mod_search_dir);
+
+	/**
+	 * @brief Search for the mod in search directories
+	 *
+	 * @param mod_name The name of the mod
+	 *
+	 * @return true if the mod was found, false otherwise
+	 */
+	bool addMod (const std::string &mod_name);
+
+	/**
 	 * @brief Get the stack of directories including base game, user
 	 * files and mods.
 	 *
@@ -76,6 +95,18 @@ public:
 	std::string getWriteDirectory () const;
 
 	/**
+	 * @brief Test if the current base game directory is valid
+	 * @return
+	 */
+	bool hasValidBaseGameDir () const;
+
+	/**
+	 * @brief Test if the current user directory is valid
+	 * @return
+	 */
+	bool hasValidUserDir () const;
+
+	/**
 	 * @brief DFDirs singleton
 	 */
 	static DFDirs df_dirs;
@@ -83,8 +114,19 @@ public:
 private:
 	DFDirs ();
 
+	/**
+	 * @brief Test if \p path exists and is a readable directory
+	 *
+	 * @param path                  file to test
+	 * @param test_write_access     set to true in order to also test write access
+	 *
+	 * @return result of the test
+	 */
+	static bool existsAndIsDirectory (const std::string &path, bool test_write_access = false);
+
 	std::string _base_game;
 	std::string _user_dir;
+	std::list<std::string> _mod_search_dirs;
 	std::list<std::string> _mod_dirs;
 };
 

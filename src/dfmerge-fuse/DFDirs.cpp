@@ -20,9 +20,63 @@
 
 #include "DFDirs.h"
 
+#include <cstdlib>
+#include <cassert>
+extern "C" {
+#include <unistd.h>
+#include <sys/stat.h>
+}
+#include "../utils/string.h"
+
 DFDirs DFDirs::df_dirs;
 
+#define BASE_GAME_SUFFIX	"/dfmerge-fuse/df"
+#define MOD_DIR_SUFFIX		"/dfmerge-fuse/mods"
+#define USERFILES_DIR_SUFFIX	"/dfmerge-fuse/userfiles"
+
 DFDirs::DFDirs () {
+	const char *home_dir = getenv ("HOME");
+	const char *xdg_data_home = getenv ("XDG_DATA_HOME");
+	assert (xdg_data_home || home_dir);
+	const char *xdg_data_dirs = getenv ("XDG_DATA_DIRS");
+	const char *xdg_config_home = getenv ("XDG_CONFIG_HOME");
+	assert (xdg_config_home || home_dir);
+
+	std::string data_home, config_home;
+	if (xdg_data_home)
+		data_home = xdg_data_home;
+	else
+		data_home = std::string (home_dir) + "/.local/share";
+	if (xdg_config_home)
+		config_home = xdg_config_home;
+	else
+		config_home = std::string (home_dir) + "/.config";
+	std::vector<std::string> data_dirs;
+	if (xdg_data_dirs)
+		data_dirs = utils::split (xdg_data_dirs, ':', false);
+	else {
+		data_dirs.push_back ("/usr/local/share");
+		data_dirs.push_back ("/usr/share");
+	}
+
+	if (existsAndIsDirectory (data_home + BASE_GAME_SUFFIX))
+		_base_game = data_home + BASE_GAME_SUFFIX;
+	else {
+		for (const auto &dir: data_dirs)
+			if (existsAndIsDirectory (dir + BASE_GAME_SUFFIX)) {
+				_base_game = dir + BASE_GAME_SUFFIX;
+				break;
+			}
+	}
+
+	if (existsAndIsDirectory (data_home + MOD_DIR_SUFFIX))
+		_mod_search_dirs.push_back (data_home + MOD_DIR_SUFFIX);
+	for (const auto &dir: data_dirs)
+		if (existsAndIsDirectory (dir + MOD_DIR_SUFFIX))
+			_mod_search_dirs.push_back (dir + MOD_DIR_SUFFIX);
+
+	if (existsAndIsDirectory (config_home + USERFILES_DIR_SUFFIX, true))
+		_user_dir = config_home + USERFILES_DIR_SUFFIX;
 }
 
 
@@ -39,6 +93,20 @@ void DFDirs::addModDir (const std::string &mod_dir) {
 	_mod_dirs.push_front (mod_dir);
 }
 
+void DFDirs::addModSearchDir (const std::string &mod_search_dir) {
+	_mod_search_dirs.push_front (mod_search_dir);
+}
+
+bool DFDirs::addMod (const std::string &mod_name) {
+	for (const auto &dir: _mod_search_dirs) {
+		if (existsAndIsDirectory (dir + "/" + mod_name)) {
+			_mod_dirs.push_front (dir + "/" + mod_name);
+			return true;
+		}
+	}
+	return false;
+}
+
 std::list<std::string> DFDirs::getDirectoryStack () const {
 	std::list<std::string> dir_list = _mod_dirs;
 	dir_list.push_back (_base_game);
@@ -48,4 +116,42 @@ std::list<std::string> DFDirs::getDirectoryStack () const {
 
 std::string DFDirs::getWriteDirectory () const {
 	return _user_dir;
+}
+
+bool DFDirs::hasValidBaseGameDir () const {
+	return existsAndIsDirectory (_base_game);
+}
+
+bool DFDirs::hasValidUserDir () const {
+	return existsAndIsDirectory (_user_dir, true);
+}
+
+bool DFDirs::existsAndIsDirectory (const std::string &path, bool test_write_access) {
+	struct stat statbuf;
+
+	if (-1 == ::stat (path.c_str (), &statbuf))
+		return false;
+	mode_t mode = statbuf.st_mode;
+
+	if (!S_ISDIR (mode))
+		return false;
+
+	bool readable = false;
+	if (S_IROTH & mode)
+		readable = true;
+	else if (statbuf.st_gid == ::getgid () && S_IRGRP & mode)
+		readable = true;
+	else if (statbuf.st_uid == ::getuid () && S_IRUSR & mode)
+		readable = true;
+
+	if (!readable || !test_write_access)
+		return readable;
+
+	if (S_IWOTH & mode)
+		return true;
+	else if (statbuf.st_gid == ::getgid () && S_IWGRP & mode)
+		return true;
+	else if (statbuf.st_uid == ::getuid () && S_IWUSR & mode)
+		return true;
+	return false;
 }

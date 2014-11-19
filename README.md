@@ -27,12 +27,14 @@ Usage
 
 ### Mount filesystem
 
-    dfmerge-fuse <mount_point> <base_game> <user_dir> [<mod_dir> ...]
+    dfmerge-fuse [options] <mount_point> [<mod> ...]
 
  * `mount_point` Directory where the merged filesystem will be mounted.
- * `base_game` Vanilla game directory.
- * `user_dir` Directory used to store user files.
- * `mod_dir` Mod directories.
+
+    The options are:
+ * `-b|--basedir <dir>` The base (vanilla) game directory. The default is search in `$XDG_DATA_DIRS`/dfmerge-fuse/df.
+ * `-u|--userdir <dir>` The user files directory (must be writeable). The default is set to `$XDG_CONFIG_HOME`/dfmerge-fuse/userfiles, if it exists.
+ * `-m|--moddir <dir>` Add a directory for searching mods. Default search directories are `$XDG_DATA_DIRS`/dfmerge-fuse/mods.
 
 ### Get patch file from full files
 
