@@ -82,12 +82,24 @@ void OverridesData::diff (const OverridesData &other) {
 }
 
 void OverridesData::processToken (const std::vector<std::string> &values) {
+	if (values.size () < 1) {
+		// TODO: print warning
+		return;
+	}
 	if (values[0] == "TILESET") {
+		if (values.size () < 4) {
+			// TODO: print warning
+			return;
+		}
 		_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
 	}
 	else if (values[0] == "OVERRIDE") {
 		std::vector<std::string> key, value;
 		unsigned int tileset_index = (values[2] == "T" ? 4 : 6);
+		if (tileset_index >= values.size ()) {
+			// TODO: print warning
+			return;
+		}
 		for (unsigned int i = 1; i < tileset_index; ++i)
 			key.push_back (values[i]);
 		for (unsigned int i = tileset_index; i < values.size (); ++i)
