@@ -22,7 +22,7 @@
 
 #include "TokenWriter.h"
 
-#include <iostream>
+#include "../utils/Log.h"
 
 static std::list<std::vector<std::string>>::iterator findToken (std::list<std::vector<std::string>> &tokens, const std::vector<std::string> &token);
 
@@ -117,16 +117,17 @@ void InterfaceData::diff (const InterfaceData &other) {
 void InterfaceData::processToken (const std::vector<std::string> &values) {
 	if (values[0] == "BIND") {
 		if (values.size () != 3) {
-			std::cerr << "Warning: Invalid BIND token: ";
-			writeToken (std::cerr, values);
+			Log::warning << "Invalid BIND token: ";
+			writeToken (Log::warning, values);
+			return;
 		}
 		auto res = _binds.emplace (values[1], (struct bind_t) { .repeat =  values[2] });
 		_current_bind = &(*res.first).second;
 	}
 	else if (values[0] == "DELETE") {
 		if (!_current_bind) {
-			std::cerr << "Warning: ignored DELETE token with no corresponding BIND: ";
-			writeToken (std::cerr, values);
+			Log::warning << "Ignored DELETE token with no corresponding BIND: ";
+			writeToken (Log::warning, values);
 			return;
 		}
 		std::vector<std::string> token;
@@ -137,8 +138,8 @@ void InterfaceData::processToken (const std::vector<std::string> &values) {
 	else {
 
 		if (!_current_bind) {
-			std::cerr << "Warning: ignored token with no corresponding BIND: ";
-			writeToken (std::cerr, values);
+			Log::warning << "Ignored token with no corresponding BIND: ";
+			writeToken (Log::warning, values);
 			return;
 		}
 		_current_bind->tokens.push_back (values);

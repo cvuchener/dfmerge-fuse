@@ -92,7 +92,6 @@ void OverridesData::processToken (const std::vector<std::string> &values) {
 		if (values.size () < 4) {
 			Log::warning << "Too few values in TILESET token: ";
 			writeToken (Log::warning, values);
-			Log::warning << std::endl;
 			return;
 		}
 		_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
@@ -103,7 +102,6 @@ void OverridesData::processToken (const std::vector<std::string> &values) {
 		if (tileset_index >= values.size ()) {
 			Log::warning << "Too few values in OVERRIDE token: ";
 			writeToken (Log::warning, values);
-			Log::warning << std::endl;
 			return;
 		}
 		for (unsigned int i = 1; i < tileset_index; ++i)
