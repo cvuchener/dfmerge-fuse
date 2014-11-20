@@ -89,12 +89,18 @@ void OverridesData::processToken (const std::vector<std::string> &values) {
 		return;
 	}
 	if (values[0] == "TILESET") {
-		if (values.size () < 4) {
+		if (values.size () < 3) {
 			Log::warning << "Too few values in TILESET token: ";
 			writeToken (Log::warning, values);
 			return;
 		}
-		_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
+		if (values.size () == 3) {
+			std::stringstream ss;
+			ss << (_tilesets.size () + 2);
+			_tilesets.emplace (ss.str (), (tileset_t){ .font = values[1], .fullfont = values[2] });
+		}
+		else
+			_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
 	}
 	else if (values[0] == "OVERRIDE") {
 		std::vector<std::string> key, value;
