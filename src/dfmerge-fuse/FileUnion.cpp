@@ -91,7 +91,9 @@ int FileUnion::copy (const std::string &newfilename) const {
 		perror ("open");
 		return -errno;
 	}
-	createPath (newfilename, 0755);
+	int ret;
+	if (0 != (ret = createPath (newfilename, 0755)))
+		return ret;
 	std::string target_path = _write_branch + newfilename;
 	int dest_fd = ::open (target_path.c_str (), O_WRONLY | O_CREAT | O_EXCL, stbuf.st_mode);
 	if (-1 == dest_fd) {
@@ -126,18 +128,18 @@ int FileUnion::copy (const std::string &newfilename) const {
 	return 0;
 }
 
-void FileUnion::createPath (const std::string &filename, mode_t mode) const {
+int FileUnion::createPath (const std::string &filename, mode_t mode) const {
 	std::vector<std::string> path = utils::split (filename.substr (1), '/', false);
 	path.pop_back (); // Remove the filename
 	std::string current = _write_branch;
 	for (const std::string &dir: path) {
 		current += "/" + dir;
 		if (-1 == ::mkdir (current.c_str (), mode) && errno != EEXIST) {
-			perror ("mkdir");
-			Log::error << "Cannot make directory " << current.c_str () << std::endl;
-			abort (); // TODO: maybe not that fatal
+			Log::error << "Cannot make directory " << current.c_str () << " (" << strerror (errno) << ")." << std::endl;
+			return -errno;
 		}
 	}
+	return 0;
 }
 
 int FileUnion::getattr (struct stat *stbuf) const {
@@ -169,7 +171,9 @@ int FileUnion::mkdir (mode_t mode) {
 		if (_exists)
 			return 0;
 	}
-	createPath (_path, mode);
+	int ret;
+	if (0 != (ret = createPath (_path, mode)))
+		return ret;
 	if (-1 == ::mkdir (_real_path.c_str (), mode))
 		return -errno;
 	_exists = true;
@@ -387,7 +391,9 @@ int FileUnion::create (mode_t mode) {
 		::unlink (hidden_path.c_str ());
 		_hidden = false;
 	}
-	createPath (_path, 0755);
+	int ret;
+	if (0 != (ret = createPath (_path, 0755)))
+		return ret;
 	_real_path = _write_branch + _path;
 	if (-1 == (_fd = ::creat (_real_path.c_str (), mode)))
 		return -errno;
