@@ -21,6 +21,7 @@
 #include "OverridesData.h"
 
 #include "TokenWriter.h"
+#include "../utils/Log.h"
 
 OverridesData::OverridesData () {
 }
@@ -78,17 +79,20 @@ void OverridesData::merge (const OverridesData &other) {
 }
 
 void OverridesData::diff (const OverridesData &other) {
+	Log::error << "OverridesData::diff is not implemented" << std::endl;
 	// TOIMPLEMENT not used by FileMerge as overrides.txt is readonly but can be usefull for dfdiff
 }
 
 void OverridesData::processToken (const std::vector<std::string> &values) {
 	if (values.size () < 1) {
-		// TODO: print warning
+		Log::warning << "Empty token in overrides data" << std::endl;
 		return;
 	}
 	if (values[0] == "TILESET") {
 		if (values.size () < 4) {
-			// TODO: print warning
+			Log::warning << "Too few values in TILESET token: ";
+			writeToken (Log::warning, values);
+			Log::warning << std::endl;
 			return;
 		}
 		_tilesets.emplace (values[3], (tileset_t){ .font = values[1], .fullfont = values[2] });
@@ -97,7 +101,9 @@ void OverridesData::processToken (const std::vector<std::string> &values) {
 		std::vector<std::string> key, value;
 		unsigned int tileset_index = (values[2] == "T" ? 4 : 6);
 		if (tileset_index >= values.size ()) {
-			// TODO: print warning
+			Log::warning << "Too few values in OVERRIDE token: ";
+			writeToken (Log::warning, values);
+			Log::warning << std::endl;
 			return;
 		}
 		for (unsigned int i = 1; i < tileset_index; ++i)

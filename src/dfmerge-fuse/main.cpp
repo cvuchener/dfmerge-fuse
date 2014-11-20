@@ -28,6 +28,7 @@ extern "C" {
 
 #include "DFMergeFuse.h"
 #include "DFDirs.h"
+#include "../utils/Log.h"
 
 static void print_usage (char *prog_name) {
 	fprintf (stderr,
@@ -35,7 +36,8 @@ static void print_usage (char *prog_name) {
 	         "Options are:\n"
 	         "  -b|--basedir <game_dir>      Set the base game directory\n"
 	         "  -u|--userdir <user_dir>      Set the user files directory\n"
-	         "  -m|--moddir <mod_dir>        Add a mod search directory\n",
+	         "  -m|--moddir <mod_dir>        Add a mod search directory\n"
+	         "  -L|--log <filename>          Log output in <filename>\n",
 	         prog_name);
 }
 
@@ -44,15 +46,17 @@ int main (int argc, char *argv[]) {
 		BASE_DIR_OPT = 256,
 		USER_DIR_OPT,
 		MOD_DIR_OPT,
+		LOG_OPT,
 	};
 	struct option longopts[] = {
 		{ "basedir", required_argument, nullptr, BASE_DIR_OPT },
 		{ "userdir", required_argument, nullptr, USER_DIR_OPT },
 		{ "moddir", required_argument, nullptr, MOD_DIR_OPT },
+		{ "log", required_argument, nullptr, LOG_OPT },
 	};
 
 	int opt;
-	while (-1 != (opt = getopt_long (argc, argv, "b:u:m:", longopts, nullptr))) {
+	while (-1 != (opt = getopt_long (argc, argv, "b:u:m:L:", longopts, nullptr))) {
 		switch (opt) {
 		case 'b':
 		case BASE_DIR_OPT:
@@ -67,6 +71,11 @@ int main (int argc, char *argv[]) {
 		case 'm':
 		case MOD_DIR_OPT:
 			DFDirs::df_dirs.addModSearchDir (optarg);
+			break;
+
+		case 'L':
+		case LOG_OPT:
+			Log::addLogFile (optarg);
 			break;
 
 		default:

@@ -37,6 +37,7 @@ extern "C" {
 }
 
 #include "../utils/string.h"
+#include "../utils/Log.h"
 
 #define HIDDEN_SUFFIX	"_HIDDEN"
 
@@ -133,6 +134,7 @@ void FileUnion::createPath (const std::string &filename, mode_t mode) const {
 		current += "/" + dir;
 		if (-1 == ::mkdir (current.c_str (), mode) && errno != EEXIST) {
 			perror ("mkdir");
+			Log::error << "Cannot make directory " << current.c_str () << std::endl;
 			abort (); // TODO: maybe not that fatal
 		}
 	}
