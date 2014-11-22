@@ -68,7 +68,7 @@ bool FileUnion::findFile () {
 		struct stat statbuf;
 		if (-1 == ::stat (real_path.c_str (), &statbuf)) {
 			if (errno != ENOENT)
-				Log::error << "stat on " << real_path.c_str () << ": " << strerror (errno) << std::endl;
+				Log::error << "stat on " << real_path << ": " << strerror (errno) << std::endl;
 		}
 		else {
 			_real_path = real_path;
@@ -88,7 +88,7 @@ int FileUnion::copy (const std::string &newfilename) const {
 	::stat (_real_path.c_str (), &stbuf);
 	int src_fd = ::open (_real_path.c_str (), O_RDONLY);
 	if (-1 == src_fd) {
-		perror ("open");
+		Log::error << "Cannot open source file " << _real_path << " for copy: " << strerror (errno) << std::endl;
 		return -errno;
 	}
 	int ret;
@@ -97,7 +97,7 @@ int FileUnion::copy (const std::string &newfilename) const {
 	std::string target_path = _write_branch + newfilename;
 	int dest_fd = ::open (target_path.c_str (), O_WRONLY | O_CREAT | O_EXCL, stbuf.st_mode);
 	if (-1 == dest_fd) {
-		perror ("open");
+		Log::error << "Cannot open destination file " << target_path << " for copy: " << strerror (errno) << std::endl;
 		::close (src_fd);
 		return -errno;
 	}
@@ -105,7 +105,7 @@ int FileUnion::copy (const std::string &newfilename) const {
 	while (1) {
 		int r;
 		if (-1 == (r = ::read (src_fd, buffer, sizeof (buffer)))) {
-			perror ("read");
+			Log::error << "Error while reading " << _real_path << " while copying: " << strerror (errno) << std::endl;
 			::close (src_fd);
 			::close (dest_fd);
 			return -errno;
@@ -115,7 +115,7 @@ int FileUnion::copy (const std::string &newfilename) const {
 		int ret, w = 0;
 		while (w != r) {
 			if (-1 == (ret = ::write (dest_fd, buffer+w, r-w))) {
-				perror ("write");
+				Log::error << "Error while writing " << target_path << " while copying: " << strerror (errno) << std::endl;
 				::close (src_fd);
 				::close (dest_fd);
 				return -errno;
@@ -250,7 +250,7 @@ int FileUnion::rename (const char *new_name) {
 
 		int src_fd = ::open (_real_path.c_str (), O_RDONLY);
 		if (-1 == src_fd) {
-			perror ("open");
+			Log::error << "Cannot open file " << _real_path << " for renaming to a different file type: " << strerror (errno) << std::endl;
 			delete new_file;
 			return -errno;
 		}
