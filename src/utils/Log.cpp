@@ -29,7 +29,8 @@ Log Log::warning ("WARNING", &std::cerr);
 Log Log::error ("ERROR", &std::cerr);
 
 Log::Log (const std::string &prefix, std::ostream *out):
-        std::ostream (&_buf), _buf (prefix, out) {
+	std::ostream (&_buf), _buf (prefix, out)
+{
 }
 
 Log::~Log () {
@@ -42,7 +43,8 @@ void Log::addLogFile (const char *filename) {
 std::vector<std::ostream *> Log::LogBuf::_file_out;
 
 Log::LogBuf::LogBuf (const std::string &prefix, std::ostream *out):
-        _prefix (prefix), _out (out) {
+	_prefix (prefix), _out (out)
+{
 }
 
 int Log::LogBuf::sync () {

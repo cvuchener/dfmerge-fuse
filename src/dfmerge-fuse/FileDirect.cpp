@@ -30,7 +30,8 @@ extern "C" {
 }
 
 FileDirect::FileDirect (const std::string &path, const std::string &branch):
-	File (path, "direct"), _branch (branch) {
+	File (path, "direct"), _branch (branch)
+{
 
 }
 

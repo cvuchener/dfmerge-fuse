@@ -42,8 +42,8 @@ extern "C" {
 #define HIDDEN_SUFFIX	"_HIDDEN"
 
 FileUnion::FileUnion (const std::string &path, const std::list<std::string> &branches, const std::string &write_branch):
-	File (path, "union"), _branches (branches), _write_branch (write_branch) {
-
+	File (path, "union"), _branches (branches), _write_branch (write_branch)
+{
 	// Check if file is hidden
 	std::string hidden_path = _write_branch + _path + HIDDEN_SUFFIX;
 	struct stat statbuf;

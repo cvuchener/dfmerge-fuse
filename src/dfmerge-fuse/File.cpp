@@ -26,7 +26,9 @@ extern "C" {
 #include <errno.h>
 }
 
-File::File (const std::string &path, const std::string &fsname): _path (path), _fsname (fsname) {
+File::File (const std::string &path, const std::string &fsname):
+	_path (path), _fsname (fsname)
+{
 }
 
 File::~File () {

@@ -23,8 +23,8 @@
 #include "FileFactory.h"
 
 FileLink::FileLink (const std::string &path, const std::string &target, bool readonly):
-	File (path, "link"), _target_file (FileFactory::file_factory.newFile (target)), _readonly (readonly) {
-
+	File (path, "link"), _target_file (FileFactory::file_factory.newFile (target)), _readonly (readonly)
+{
 }
 
 FileLink::~FileLink () {

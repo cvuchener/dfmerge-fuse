@@ -33,7 +33,8 @@ extern "C" {
 
 template <class DataModel>
 FileMerge<DataModel>::FileMerge (const std::string &path, const std::list<std::string> &branches, const std::string &write_branch, bool readonly):
-	File (path, "merge"), _branches (branches), _write_branch (write_branch), _readonly (readonly) {
+	File (path, "merge"), _branches (branches), _write_branch (write_branch), _readonly (readonly)
+{
 	DataModel data;
 	for (auto it = _branches.rbegin (); it != _branches.rend (); ++it) {
 		std::ifstream file ((*it + _path).c_str ());
