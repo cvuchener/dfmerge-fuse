@@ -20,7 +20,7 @@
 
 #include "File.h"
 
-#include <cstdio>
+#include "../utils/Log.h"
 
 extern "C" {
 #include <errno.h>
@@ -33,10 +33,8 @@ File::~File () {
 }
 
 #define UNIMPLEMENTED do { \
-	fprintf (stderr, "Warning: %s is not implemented in filesystem %s (%s)\n", \
-		 __FUNCTION__, \
-		 _fsname.c_str (), \
-		 _path.c_str ()); \
+	Log::warning << __FUNCTION__ << " is not implemented in filesystem " << _fsname.c_str () \
+	             << " (" << _path.c_str () << ")" << std::endl; \
 	return -ENOSYS; \
 	} while (0)
 

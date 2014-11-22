@@ -68,7 +68,7 @@ bool FileUnion::findFile () {
 		struct stat statbuf;
 		if (-1 == ::stat (real_path.c_str (), &statbuf)) {
 			if (errno != ENOENT)
-				fprintf (stderr, "Error: stat on %s: %s\n", real_path.c_str (), strerror (errno));
+				Log::error << "stat on " << real_path.c_str () << ": " << strerror (errno) << std::endl;
 		}
 		else {
 			_real_path = real_path;
