@@ -131,27 +131,9 @@ bool DFDirs::existsAndIsDirectory (const std::string &path, bool test_write_acce
 
 	if (-1 == ::stat (path.c_str (), &statbuf))
 		return false;
-	mode_t mode = statbuf.st_mode;
 
-	if (!S_ISDIR (mode))
+	if (!S_ISDIR (statbuf.st_mode))
 		return false;
 
-	bool readable = false;
-	if (S_IROTH & mode)
-		readable = true;
-	else if (statbuf.st_gid == ::getgid () && S_IRGRP & mode)
-		readable = true;
-	else if (statbuf.st_uid == ::getuid () && S_IRUSR & mode)
-		readable = true;
-
-	if (!readable || !test_write_access)
-		return readable;
-
-	if (S_IWOTH & mode)
-		return true;
-	else if (statbuf.st_gid == ::getgid () && S_IWGRP & mode)
-		return true;
-	else if (statbuf.st_uid == ::getuid () && S_IWUSR & mode)
-		return true;
-	return false;
+	return 0 == ::access (path.c_str (), R_OK | (test_write_access ? W_OK : 0));
 }
