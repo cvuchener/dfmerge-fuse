@@ -69,7 +69,7 @@ int DFMergeFuse::mount (const char *mountpoint) {
 	struct fuse_chan *chan = ::fuse_mount (mountpoint, nullptr);
 	_fuse = ::fuse_new (chan, nullptr, &_fuse_ops, sizeof (struct fuse_operations), this);
 	::fuse_set_signal_handlers (fuse_get_session (_fuse));
-	return ::fuse_loop_mt (_fuse);
+	return ::fuse_loop (_fuse);
 }
 
 void *DFMergeFuse::init (struct fuse_conn_info *conn) {
