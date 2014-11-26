@@ -88,7 +88,7 @@ private:
 	std::string _real_path;
 	bool _writable;
 	bool _exists;
-	bool _hidden;
+	bool _hidden; //< The file is hidden in the *writable* branch
 
 	int _fd;
 };

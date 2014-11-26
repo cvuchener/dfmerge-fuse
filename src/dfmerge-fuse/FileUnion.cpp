@@ -44,28 +44,38 @@ extern "C" {
 FileUnion::FileUnion (const std::string &path, const std::list<std::string> &branches, const std::string &write_branch):
 	File (path, "union"), _branches (branches), _write_branch (write_branch)
 {
-	// Check if file is hidden
-	std::string hidden_path = _write_branch + _path + HIDDEN_SUFFIX;
-	struct stat statbuf;
-	if (-1 != ::stat (hidden_path.c_str (), &statbuf)) {
-		_real_path = _write_branch + _path;
-		_writable = true;
-		_exists = false;
-		_hidden = true;
-	}
-	else { // The file is not hidden, search for it
-		_hidden = false;
-		findFile ();
-	}
+	findFile ();
 }
 
 FileUnion::~FileUnion () {
 }
 
 bool FileUnion::findFile () {
+	_hidden = false;
 	for (const std::string &dirname: _branches) {
 		std::string real_path = dirname + _path;
 		struct stat statbuf;
+
+		// Check for HIDDEN file
+		if (-1 == ::stat ((real_path + HIDDEN_SUFFIX).c_str (), &statbuf)) {
+			if (errno != ENOENT)
+				Log::error << "stat on " << (real_path + HIDDEN_SUFFIX) << ": " << strerror (errno) << std::endl;
+		}
+		else {
+			if (dirname == _write_branch) {
+				_real_path = real_path;
+				_writable = true;
+				_exists = false;
+				_hidden = true;
+				return false;
+			}
+			else {
+				// The file is hidden in a read only branch, do has if it does not exists at all
+				break;
+			}
+		}
+
+		// Check for the real file
 		if (-1 == ::stat (real_path.c_str (), &statbuf)) {
 			if (errno != ENOENT)
 				Log::error << "stat on " << real_path << ": " << strerror (errno) << std::endl;
