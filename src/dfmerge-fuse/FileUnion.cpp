@@ -364,8 +364,11 @@ int FileUnion::release (int flags) {
 int FileUnion::readdir (std::vector<std::string> &dir_content) const {
 	std::regex hidden_re (HIDDEN_SUFFIX "$");
 	std::set<std::string> content;
-	std::set<std::string> hidden;
-	for (const std::string &branch: _branches) {
+	std::list<std::string>::const_reverse_iterator it;
+	for (it = _branches.rbegin (); it != _branches.rend (); ++it) {
+		const std::string &branch = *it;
+		std::set<std::string> hidden;
+
 		DIR *dir = ::opendir ((branch + _path).c_str ());
 		if (!dir)
 			continue;
@@ -373,7 +376,9 @@ int FileUnion::readdir (std::vector<std::string> &dir_content) const {
 		while (nullptr != (ent = ::readdir (dir))) {
 			std::string filename (ent->d_name);
 			std::smatch results;
+
 			if (std::regex_search (filename, results, hidden_re)) {
+				// Files are hidden later, so that if both regular and HIDDEN file are presents in the same branch, it will be hidden anyway.
 				hidden.insert (filename.substr (0, results.position ()));
 			}
 			else {
@@ -381,12 +386,12 @@ int FileUnion::readdir (std::vector<std::string> &dir_content) const {
 			}
 		}
 		::closedir (dir);
-	}
-	for (const std::string &hiddenfile: hidden) {
-		content.erase (hiddenfile);
+
+		for (const auto &filename: hidden)
+			content.erase (filename);
 	}
 	dir_content.clear ();
-	for (const std::string &filename: content) {
+	for (const auto &filename: content) {
 		dir_content.push_back (filename);
 	}
 	return 0;
