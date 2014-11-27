@@ -1,148 +1,167 @@
-#------------------------------------------------------------------------------
+# This module can find FUSE Library
 #
-#  Copyright (C) 2010  Artem Rodygin
+# Requirements:
+# - CMake >= 2.8.3
 #
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
+# The following variables will be defined for your use:
+#   - FUSE_FOUND         : was FUSE found?
+#   - FUSE_INCLUDE_DIRS  : FUSE include directory
+#   - FUSE_LIBRARIES     : FUSE library
+#   - FUSE_DEFINITIONS   : FUSE cflags
+#   - FUSE_VERSION       : complete version of FUSE (major.minor)
+#   - FUSE_MAJOR_VERSION : major version of FUSE
+#   - FUSE_MINOR_VERSION : minor version of FUSE
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# Example Usage:
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   1. Copy this file in the root of your project source directory
+#   2. Then, tell CMake to search this non-standard module in your project directory by adding to your CMakeLists.txt:
+#     set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+#   3. Finally call find_package() once, here are some examples to pick from
 #
-#------------------------------------------------------------------------------
+#   Require FUSE 2.6 or later
+#     find_package(FUSE 2.6 REQUIRED)
 #
-#  This module finds if C API of FUSE library is installed and determines where required
-#  include files and libraries are. The module sets the following variables:
-#
-#    FUSE_FOUND         - system has FUSE
-#    FUSE_INCLUDE_DIR   - the FUSE include directory
-#    FUSE_LIBRARIES     - the libraries needed to use FUSE
-#    FUSE_DEFINITIONS   - the compiler definitions, required for building with FUSE
-#    FUSE_VERSION_MAJOR - the major version of the FUSE release
-#    FUSE_VERSION_MINOR - the minor version of the FUSE release
-#
-#  You can help the module to find FUSE by specifying its root path
-#  in environment variable named "FUSE_ROOTDIR". If this variable is not set
-#  then module will search for files in "/usr/local" and "/usr" by default.
-#
-#------------------------------------------------------------------------------
+#   if(FUSE_FOUND)
+#      add_definitions(${FUSE_DEFINITIONS})
+#      include_directories(${FUSE_INCLUDE_DIRS})
+#      add_executable(myapp myapp.c)
+#      target_link_libraries(myapp ${FUSE_LIBRARIES})
+#   endif()
 
+#=============================================================================
+# Copyright (c) 2012, julp
+#
+# Distributed under the OSI-approved BSD License
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#=============================================================================
+
+cmake_minimum_required(VERSION 2.8.3)
+
+########## Private ##########
+function(fusedebug _varname)
+    if(FUSE_DEBUG)
+        message("${_varname} = ${${_varname}}")
+    endif(FUSE_DEBUG)
+endfunction(fusedebug)
+
+########## Public ##########
 set(FUSE_FOUND TRUE)
+set(FUSE_LIBRARIES )
+set(FUSE_DEFINITIONS )
+set(FUSE_INCLUDE_DIRS )
 
-# search for header
+find_package(PkgConfig)
 
-find_path(FUSE_INCLUDE_DIR
-          NAMES "fuse/fuse.h"
-                "fuse/fuse_common.h"
-          PATHS "/usr/local"
-                "/usr"
-          ENV FUSE_ROOTDIR
-          PATH_SUFFIXES "include")
+set(PC_FUSE_INCLUDE_DIRS )
+set(PC_FUSE_LIBRARY_DIRS )
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_FUSE "fuse" QUIET)
+    if(PC_FUSE_FOUND)
+#         fusedebug(PC_FUSE_LIBRARIES)
+#         fusedebug(PC_FUSE_LIBRARY_DIRS)
+#         fusedebug(PC_FUSE_LDFLAGS)
+#         fusedebug(PC_FUSE_LDFLAGS_OTHER)
+#         fusedebug(PC_FUSE_INCLUDE_DIRS)
+#         fusedebug(PC_FUSE_CFLAGS)
+#         fusedebug(PC_FUSE_CFLAGS_OTHER)
+        set(FUSE_DEFINITIONS "${PC_FUSE_CFLAGS_OTHER}")
+    endif(PC_FUSE_FOUND)
+endif(PKG_CONFIG_FOUND)
 
-# header is found
+find_path(
+    FUSE_INCLUDE_DIRS
+    NAMES fuse.h
+    PATHS "${PC_FUSE_INCLUDE_DIRS}"
+    DOC "Include directories for FUSE"
+)
 
-if (FUSE_INCLUDE_DIR)
-
-    set(FUSE_INCLUDE_DIR "${FUSE_INCLUDE_DIR}/fuse")
-
-    # retrieve version information from the header
-
-    file(READ "${FUSE_INCLUDE_DIR}/fuse_common.h" FUSE_COMMON_H_FILE)
-
-    string(REGEX REPLACE ".*#define[ \t]+FUSE_MAJOR_VERSION[ \t]+([0-9]+).*" "\\1" FUSE_VERSION_MAJOR "${FUSE_COMMON_H_FILE}")
-    string(REGEX REPLACE ".*#define[ \t]+FUSE_MINOR_VERSION[ \t]+([0-9]+).*" "\\1" FUSE_VERSION_MINOR "${FUSE_COMMON_H_FILE}")
-
-    # search for library
-
-    find_library(FUSE_LIBRARIES
-                 NAMES "libfuse.so"
-                 PATHS "/usr/local"
-                       "/usr"
-                 ENV FUSE_ROOTDIR
-                 PATH_SUFFIXES "lib")
-
-endif (FUSE_INCLUDE_DIR)
-
-# header is not found
-
-if (NOT FUSE_INCLUDE_DIR)
+if(NOT FUSE_INCLUDE_DIRS)
     set(FUSE_FOUND FALSE)
-endif (NOT FUSE_INCLUDE_DIR)
+endif(NOT FUSE_INCLUDE_DIRS)
 
-# library is not found
+find_library(
+    FUSE_LIBRARIES
+    NAMES "fuse"
+    PATHS "${PC_FUSE_LIBRARY_DIRS}"
+    DOC "Libraries for FUSE"
+)
 
-if (NOT FUSE_LIBRARIES)
+if(NOT FUSE_LIBRARIES)
     set(FUSE_FOUND FALSE)
-endif (NOT FUSE_LIBRARIES)
+endif(NOT FUSE_LIBRARIES)
 
-# set default error message
+if(FUSE_FOUND)
+    if(EXISTS "${FUSE_INCLUDE_DIRS}/fuse/fuse_common.h")
+        file(READ "${FUSE_INCLUDE_DIRS}/fuse/fuse_common.h" _contents)
+        string(REGEX REPLACE ".*# *define *FUSE_MAJOR_VERSION *([0-9]+).*" "\\1" FUSE_MAJOR_VERSION "${_contents}")
+        string(REGEX REPLACE ".*# *define *FUSE_MINOR_VERSION *([0-9]+).*" "\\1" FUSE_MINOR_VERSION "${_contents}")
+        set(FUSE_VERSION "${FUSE_MAJOR_VERSION}.${FUSE_MINOR_VERSION}")
+    endif()
 
-if (FUSE_FIND_VERSION)
-    set(FUSE_ERROR_MESSAGE "Unable to find FUSE library v${FUSE_FIND_VERSION}")
-else (FUSE_FIND_VERSION)
-    set(FUSE_ERROR_MESSAGE "Unable to find FUSE library")
-endif (FUSE_FIND_VERSION)
+    include(CheckCSourceCompiles)
+    # Backup CMAKE_REQUIRED_*
+    set(OLD_CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}")
+    set(OLD_CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
+    set(OLD_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
+    # Add FUSE compilation flags
+    set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}" "${FUSE_INCLUDE_DIRS}")
+    set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}" "${FUSE_LIBRARIES}")
+    set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}" "${FUSE_DEFINITIONS}")
+    check_c_source_compiles("#include <stdlib.h>
+#include <fuse.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
-# check found version
+int main(void) {
+    return 0;
+}" FUSE_CFLAGS_CHECK)
+    if(NOT FUSE_CFLAGS_CHECK)
+        set(FUSE_DEFINITIONS "-D_FILE_OFFSET_BITS=64")
+        # Should we run again previous test to assume the failure was due to missing definition -D_FILE_OFFSET_BITS=64?
+    endif(NOT FUSE_CFLAGS_CHECK)
+    # Restore CMAKE_REQUIRED_*
+    set(CMAKE_REQUIRED_INCLUDES "${OLD_CMAKE_REQUIRED_INCLUDES}")
+    set(CMAKE_REQUIRED_LIBRARIES "${OLD_CMAKE_REQUIRED_LIBRARIES}")
+    set(CMAKE_REQUIRED_DEFINITIONS "${OLD_CMAKE_REQUIRED_DEFINITIONS}")
+endif(FUSE_FOUND)
 
-if (FUSE_FIND_VERSION AND FUSE_FOUND)
+if(FUSE_INCLUDE_DIRS)
+    include(FindPackageHandleStandardArgs)
+    if(FUSE_FIND_REQUIRED AND NOT FUSE_FIND_QUIETLY)
+        find_package_handle_standard_args(FUSE REQUIRED_VARS FUSE_LIBRARIES FUSE_INCLUDE_DIRS VERSION_VAR FUSE_VERSION)
+    else()
+        find_package_handle_standard_args(FUSE "FUSE not found" FUSE_LIBRARIES FUSE_INCLUDE_DIRS)
+    endif()
+else(FUSE_INCLUDE_DIRS)
+    if(FUSE_FIND_REQUIRED AND NOT FUSE_FIND_QUIETLY)
+        message(FATAL_ERROR "Could not find FUSE include directory")
+    endif()
+endif(FUSE_INCLUDE_DIRS)
 
-    set(FUSE_FOUND_VERSION "${FUSE_VERSION_MAJOR}.${FUSE_VERSION_MINOR}")
+mark_as_advanced(
+    FUSE_INCLUDE_DIRS
+    FUSE_LIBRARIES
+)
 
-    if (FUSE_FIND_VERSION_EXACT)
-        if (NOT ${FUSE_FOUND_VERSION} VERSION_EQUAL ${FUSE_FIND_VERSION})
-            set(FUSE_FOUND FALSE)
-        endif (NOT ${FUSE_FOUND_VERSION} VERSION_EQUAL ${FUSE_FIND_VERSION})
-    else (FUSE_FIND_VERSION_EXACT)
-        if (${FUSE_FOUND_VERSION} VERSION_LESS ${FUSE_FIND_VERSION})
-            set(FUSE_FOUND FALSE)
-        endif (${FUSE_FOUND_VERSION} VERSION_LESS ${FUSE_FIND_VERSION})
-    endif (FUSE_FIND_VERSION_EXACT)
-
-    if (NOT FUSE_FOUND)
-        set(FUSE_ERROR_MESSAGE "Unable to find FUSE library v${FUSE_FIND_VERSION} (${FUSE_FOUND_VERSION} was found)")
-    endif (NOT FUSE_FOUND)
-
-endif (FUSE_FIND_VERSION AND FUSE_FOUND)
-
-# add definitions
-
-if (FUSE_FOUND)
-
-    if (CMAKE_SYSTEM_PROCESSOR MATCHES ia64)
-        set(FUSE_DEFINITIONS "-D_REENTRANT -D_FILE_OFFSET_BITS=64")
-    elseif (CMAKE_SYSTEM_PROCESSOR MATCHES amd64)
-        set(FUSE_DEFINITIONS "-D_REENTRANT -D_FILE_OFFSET_BITS=64")
-    elseif (CMAKE_SYSTEM_PROCESSOR MATCHES x86_64)
-        set(FUSE_DEFINITIONS "-D_REENTRANT -D_FILE_OFFSET_BITS=64")
-    else (CMAKE_SYSTEM_PROCESSOR MATCHES ia64)
-        set(FUSE_DEFINITIONS "-D_REENTRANT")
-    endif (CMAKE_SYSTEM_PROCESSOR MATCHES ia64)
-
-endif (FUSE_FOUND)
-
-# final status messages
-
-if (FUSE_FOUND)
-
-    if (NOT FUSE_FIND_QUIETLY)
-        message(STATUS "FUSE ${FUSE_VERSION_MAJOR}.${FUSE_VERSION_MINOR}")
-    endif (NOT FUSE_FIND_QUIETLY)
-
-    mark_as_advanced(FUSE_INCLUDE_DIR
-                     FUSE_LIBRARIES
-                     FUSE_DEFINITIONS)
-
-else (FUSE_FOUND)
-
-    if (FUSE_FIND_REQUIRED)
-        message(SEND_ERROR "${FUSE_ERROR_MESSAGE}")
-    endif (FUSE_FIND_REQUIRED)
-
-endif (FUSE_FOUND)
+# IN (args)
+fusedebug("FUSE_FIND_COMPONENTS")
+fusedebug("FUSE_FIND_REQUIRED")
+fusedebug("FUSE_FIND_QUIETLY")
+fusedebug("FUSE_FIND_VERSION")
+# OUT
+# Found
+fusedebug("FUSE_FOUND")
+# Definitions
+fusedebug("FUSE_DEFINITIONS")
+# Linking
+fusedebug("FUSE_INCLUDE_DIRS")
+fusedebug("FUSE_LIBRARIES")
+# Version
+fusedebug("FUSE_MAJOR_VERSION")
+fusedebug("FUSE_MINOR_VERSION")
+fusedebug("FUSE_VERSION")
