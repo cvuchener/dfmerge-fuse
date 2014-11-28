@@ -202,7 +202,17 @@ int FileUnion::unlink () {
 	// The file is in another directory
 	// Add a *_HIDDEN file to hide it
 	std::string hidden_path = _write_branch + _path + HIDDEN_SUFFIX;
-	::close (::creat (hidden_path.c_str (), 0644));
+	int ret;
+	if (0 != (ret = createPath (_path, 0755))) {
+		Log::error << "createPath failed for " << _path << ": " << strerror (-ret) << std::endl;
+		return ret;
+	}
+	int fd;
+	if (-1 == (fd = ::creat (hidden_path.c_str (), 0644))) {
+		Log::error << "Cannot create hidden file " << hidden_path << ": " << strerror (errno) << std::endl;
+		return -errno;
+	}
+	::close (fd);
 	_exists = false;
 	_hidden = true;
 	_writable = true;
