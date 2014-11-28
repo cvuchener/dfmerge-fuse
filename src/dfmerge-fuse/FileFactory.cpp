@@ -26,6 +26,9 @@
 #include "FileMerge.h"
 #include "FileLink.h"
 
+#include "../utils/Log.h"
+#include "../utils/file.h"
+
 FileFactory FileFactory::file_factory;
 
 FileFactory::FileFactory () {
@@ -57,7 +60,12 @@ FileFactory::FileFactory () {
 	_rules.push_back (std::pair<std::regex, factory_t> (
 		std::regex ("/data/save(/.*)?"),
 		[] (const std::string &path) -> File * {
-			return new FileDirect (path, DFDirs::df_dirs.getWriteDirectory ());
+			std::string branch = DFDirs::df_dirs.getWriteDirectory ();
+			int ret;
+			if (0 != (ret = utils::createPath (branch, "/data/save", 0755))) {
+				Log::error << "Cannot create the path for /data/save in the branch " << branch << ": " << ::strerror (ret) << std::endl;
+			}
+			return new FileDirect (path, branch);
 		}));
 
 	_default_factory = [] (const std::string &path) -> File * {
