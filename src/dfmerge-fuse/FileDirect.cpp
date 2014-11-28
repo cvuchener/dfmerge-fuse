@@ -20,6 +20,8 @@
 
 #include "FileDirect.h"
 
+#include "../utils/file.h"
+
 extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
@@ -45,6 +47,9 @@ int FileDirect::getattr (struct stat *stbuf) const {
 }
 
 int FileDirect::mkdir (mode_t mode) {
+	int ret;
+	if (0 != (ret = utils::createPath (_branch, _path, mode)))
+		return ret;
 	if (-1 == ::mkdir ((_branch + _path).c_str (), mode))
 		return -errno;
 	return 0;
@@ -81,6 +86,9 @@ int FileDirect::truncate (off_t length) {
 }
 
 int FileDirect::open (int flags) {
+	int ret;
+	if (0 != (ret = utils::createPath (_branch, _path, 0755)))
+		return ret;
 	if (-1 == (_fd = ::open ((_branch + _path).c_str (), flags)))
 		return -errno;
 	return 0;
@@ -133,6 +141,9 @@ int FileDirect::readdir (std::vector<std::string> &dir_content) const {
 }
 
 int FileDirect::create (mode_t mode) {
+	int ret;
+	if (0 != (ret = utils::createPath (_branch, _path, 0755)))
+		return ret;
 	if (-1 == (_fd = ::creat ((_branch + _path).c_str (), mode)))
 		return -errno;
 	return 0;

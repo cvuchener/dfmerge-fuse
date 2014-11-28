@@ -36,8 +36,8 @@ extern "C" {
 #include <fuse.h>
 }
 
-#include "../utils/string.h"
 #include "../utils/Log.h"
+#include "../utils/file.h"
 
 #define HIDDEN_SUFFIX	"_HIDDEN"
 
@@ -102,7 +102,7 @@ int FileUnion::copy (const std::string &newfilename) const {
 		return -errno;
 	}
 	int ret;
-	if (0 != (ret = createPath (newfilename, 0755)))
+	if (0 != (ret = utils::createPath (_write_branch, newfilename, 0755)))
 		return ret;
 	std::string target_path = _write_branch + newfilename;
 	int dest_fd = ::open (target_path.c_str (), O_WRONLY | O_CREAT | O_EXCL, stbuf.st_mode);
@@ -138,20 +138,6 @@ int FileUnion::copy (const std::string &newfilename) const {
 	return 0;
 }
 
-int FileUnion::createPath (const std::string &filename, mode_t mode) const {
-	std::vector<std::string> path = utils::split (filename.substr (1), '/', false);
-	path.pop_back (); // Remove the filename
-	std::string current = _write_branch;
-	for (const std::string &dir: path) {
-		current += "/" + dir;
-		if (-1 == ::mkdir (current.c_str (), mode) && errno != EEXIST) {
-			Log::error << "Cannot make directory " << current.c_str () << " (" << strerror (errno) << ")." << std::endl;
-			return -errno;
-		}
-	}
-	return 0;
-}
-
 int FileUnion::getattr (struct stat *stbuf) const {
 	struct stat real_stbuf;
 	if (_hidden)
@@ -182,7 +168,7 @@ int FileUnion::mkdir (mode_t mode) {
 			return 0;
 	}
 	int ret;
-	if (0 != (ret = createPath (_path, mode)))
+	if (0 != (ret = utils::createPath (_write_branch, _path, mode)))
 		return ret;
 	if (-1 == ::mkdir (_real_path.c_str (), mode))
 		return -errno;
@@ -203,7 +189,7 @@ int FileUnion::unlink () {
 	// Add a *_HIDDEN file to hide it
 	std::string hidden_path = _write_branch + _path + HIDDEN_SUFFIX;
 	int ret;
-	if (0 != (ret = createPath (_path, 0755))) {
+	if (0 != (ret = utils::createPath (_write_branch, _path, 0755))) {
 		Log::error << "createPath failed for " << _path << ": " << strerror (-ret) << std::endl;
 		return ret;
 	}
@@ -232,7 +218,7 @@ int FileUnion::rmdir () {
 	// Add a *_HIDDEN file to hide it
 	std::string hidden_path = _write_branch + _path + HIDDEN_SUFFIX;
 	int ret;
-	if (0 != (ret = createPath (_path, 0755))) {
+	if (0 != (ret = utils::createPath (_write_branch, _path, 0755))) {
 		Log::error << "createPath failed for " << _path << ": " << strerror (-ret) << std::endl;
 		return ret;
 	}
@@ -427,7 +413,7 @@ int FileUnion::create (mode_t mode) {
 		_hidden = false;
 	}
 	int ret;
-	if (0 != (ret = createPath (_path, 0755)))
+	if (0 != (ret = utils::createPath (_write_branch, _path, 0755)))
 		return ret;
 	_real_path = _write_branch + _path;
 	if (-1 == (_fd = ::creat (_real_path.c_str (), mode)))

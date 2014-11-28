@@ -71,17 +71,6 @@ private:
 	 */
 	int copy (const std::string &newfilename) const;
 
-	/**
-	 * @brief Create a path in the writable branch (if it does not
-	 * already exists.
-	 *
-	 * @param filename The filename whose directory must be created.
-	 * @param mode The mode of the created directories.
-	 *
-	 * @return 0 if succeeded, -errno from mkdir otherwise
-	 */
-	int createPath (const std::string &filename, mode_t mode) const;
-
 	std::list<std::string> _branches;
 	std::string _write_branch;
 
